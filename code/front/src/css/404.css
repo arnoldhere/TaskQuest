@@ -1,0 +1,70 @@
+.rocket-main {
+    height: 100vh;
+    background: #000000;
+    text-align: center;
+    color: #E0E0E0;
+    font-family: 'Fira Mono', monospace;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+svg {
+    width: clamp(300px, 70%, 600px);
+    height: 500px;
+    margin: 0 auto;
+
+}
+
+#rocket {
+
+    transform: translateY(750px);
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto !important;
+    width: 100% !important;
+    animation: launch 2s ease-out forwards;
+}
+
+@keyframes launch {
+    from {
+        transform: translateY(750px);
+    }
+
+    to {
+        perspective: 500px;
+        transform: translateY(0px);
+    }
+}
+
+#stars {
+    animation: twinkling 2s linear;
+}
+
+@keyframes twinkling {
+
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.text {
+    opacity: 0;
+    animation: appear 1s ease-in forwards;
+    animation-delay: 1.8s;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
