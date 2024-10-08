@@ -90,7 +90,7 @@ export default function AdminLogin() {
                         toast.success("Login Successfully");
                         setIsLogin(true);
                         login();
-                        navigate("/admin", { message: "Login successful" });
+                        navigate("/admin/dashboard", { message: "Login successful" });
                     }
                     else {
                         toast.error("Invalid role specified");

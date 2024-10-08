@@ -4,7 +4,7 @@ import PageNotFound from "../component/PageNotfound";
 import AdminLayout from "../component/AdminLayout"
 import AdminLogin from "../component/Admin/Login"
 import AdminDashboard from "../component/Admin/AdminDashboard";
-
+import NewUsersList from "../component/Admin/NewUsersList";
 
 const adminRoutes = [
     {
@@ -22,6 +22,15 @@ const adminRoutes = [
                 element: (
                     <ProtectedRoute>
                         <AdminDashboard />
+                    </ProtectedRoute>
+                ),
+                errorElement: <PageNotFound />,
+            },
+            {
+                path: "new-users",
+                element: (
+                    <ProtectedRoute>
+                        <NewUsersList />
                     </ProtectedRoute>
                 ),
                 errorElement: <PageNotFound />,

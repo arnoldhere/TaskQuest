@@ -29,7 +29,7 @@ import toast, { Toaster } from 'react-hot-toast';
 const drawerWidth = 200;
 
 const navItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, to: '/admin' },
+  { text: 'Dashboard', icon: <DashboardIcon />, to: '/admin/dashboard' },
   { text: 'New Users', icon: <PersonIcon />, to: '/admin/new-users' },
   { text: 'Settings', icon: <SettingsIcon />, to: '/admin/settings' },
 ];
