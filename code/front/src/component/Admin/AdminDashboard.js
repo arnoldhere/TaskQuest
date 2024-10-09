@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../utils/AuthContext";
@@ -8,7 +8,7 @@ import Loader from '../Loader';
 import {
   Typography,
   Container,
-  Grid,
+  Grid2,
   Card,
   CardContent,
   Table,
@@ -18,15 +18,9 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Grow, Fade
 } from '@mui/material';
 import { styled } from '@mui/system';
-
-// Mock data for scorecards
-const scorecardData = [
-  { title: 'Total Users', value: 1234 },
-  { title: 'Active Users', value: 789 },
-  { title: 'New Users (This Month)', value: 56 },
-];
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -35,15 +29,38 @@ const StyledCard = styled(Card)(({ theme }) => ({
   justifyContent: 'center',
   alignItems: 'center',
   padding: theme.spacing(2),
+  boxShadow: theme.shadows[3],
+  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  '&:hover': {
+    transform: 'scale(1.05)',
+    boxShadow: theme.shadows[8],
+  },
+}));
+
+
+const AnimatedTableRow = styled(TableRow)(({ theme }) => ({
+  transition: 'all 0.3s ease-in-out',
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
 }));
 
 export default function AdminDashboard() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  // Ref to track whether toast was already shown
+  const toastShownRef = useRef(false);
 
   // State to hold fetched users
   const [fetchedUsers, setFetchedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // state to hold scorecard 
+  const [scorecardData, setScorecardData] = useState([
+    { title: 'Total Users', value: 0 },
+    { title: 'Active Users', value: null },
+    { title: 'New Users', value: null }
+  ]);
 
   // Fetch users on component mount
   useEffect(() => {
@@ -53,9 +70,21 @@ export default function AdminDashboard() {
         const res = await axios.get('http://localhost:3333/admin/fetch-users'); // Fetch users
         if (res.status === 201) {
           setFetchedUsers(res.data.users || []); // Set users to state
-          toast.success(res.data.message);
+          // Update scorecard data with fetched total user count
+          setScorecardData([
+            { title: 'Total Users', value: res.data.users_count }, // Use the correct total users count
+            { title: 'Active Users', value: 789 }, // Example static value
+            { title: 'New Users', value: 56 } // Example static value
+          ]);
+          if (!toastShownRef.current) {
+            toast.success(res.data.message);
+            toastShownRef.current = true; // Set ref to true after first toast
+          }
         } else {
-          toast.error(res.data.message);
+          if (!toastShownRef.current) {
+            toast.error(res.data.message);
+            toastShownRef.current = true; // Set ref to true after first toast
+          }
         }
       } catch (error) {
         console.error('Error fetching new users:', error);
@@ -81,26 +110,29 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Grid container spacing={3}>
+      <Container className="w-full flex flex-col justify-center items-center "
+        sx={{ mt: 4, mb: 4 }}>
+        <Grid2 container spacing={3}>
           {scorecardData.map((card, index) => (
-            <Grid item xs={12} sm={4} key={index}>
-              <StyledCard>
-                <CardContent>
-                  <Typography variant="h5" component="div">
-                    {card.title}
-                  </Typography>
-                  <Typography variant="h3" component="div" sx={{ mt: 2 }}>
-                    {card.value}
-                  </Typography>
-                </CardContent>
-              </StyledCard>
-            </Grid>
+            <Grow in={true} key={index} timeout={500 * (index + 1)}>
+              <Grid2 item xs={12} sm={4}>
+                <StyledCard>
+                  <CardContent className='flex flex-col justify-center	text-center '>
+                    <Typography variant="h5" component="div" className='text-red-500'>
+                      {card.title}
+                    </Typography>
+                    <Typography variant="h3" component="div" sx={{ mt: 2 }} className='text-gray-500'>
+                      {card.value}
+                    </Typography>
+                  </CardContent>
+                </StyledCard>
+              </Grid2>
+            </Grow>
           ))}
-        </Grid>
+        </Grid2>
 
-        <Grid container spacing={3} sx={{ mt: 4 }}>
-          <Grid item xs={12}>
+        <Grid2 container spacing={3} sx={{ mt: 4 }}>
+          <Grid2 item xs={12}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom component="div">
                 User List
@@ -118,23 +150,25 @@ export default function AdminDashboard() {
                   <TableBody>
                     {fetchedUsers.length > 0 ? (
                       fetchedUsers.map((user, index) => (
-                        <TableRow key={index + 1}>
-                          <TableCell>{user.firstname + " " + user.lastname}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.role}</TableCell>
-                          <TableCell>
-                            {new Date(user.joined).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                            })}
-                          </TableCell> {/* Format the date */}
-                        </TableRow>
+                        <Fade in={true} key={index} timeout={300 * (index + 1)}>
+                          <AnimatedTableRow>
+                            <TableCell>{user.firstname + " " + user.lastname}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.role}</TableCell>
+                            <TableCell>
+                              {new Date(user.joined).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                              })}
+                            </TableCell>
+                          </AnimatedTableRow>
+                        </Fade>
                       ))
                     ) : (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-gray-500">
-                          No pending users at the moment.
+                          No users at the moment.
                         </TableCell>
                       </TableRow>
                     )}
@@ -142,8 +176,8 @@ export default function AdminDashboard() {
                 </Table>
               </TableContainer>
             </Paper>
-          </Grid>
-        </Grid>
+          </Grid2>
+        </Grid2>
       </Container>
       <Toaster />
     </>

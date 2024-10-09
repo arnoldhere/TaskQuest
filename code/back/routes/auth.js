@@ -45,7 +45,7 @@ router.post("/login-member", async (req, res) => {
                 const userFinalData = CryptoJS.DES.encrypt(JSON.stringify(user), 'loginData').toString();
                 console.log(userFinalData);
                 const jwt_token = createToken(user._id);
-                return res.status(201).json({ message: "Logged in successfully", user: userFinalData, token: jwt_token, role: user.role });
+                return res.status(201).json({ message: "Logged in successfully", user: userFinalData, token: jwt_token, role: user.role, user_status: user.status });
             }
             else {
                 return res.status(400).json({ message: "Invalid role selected. Please try again." });

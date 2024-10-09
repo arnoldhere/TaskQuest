@@ -11,6 +11,8 @@ import axios from 'axios';
 import bg from "../../assets/bg.jpg";
 import Cookies from 'js-cookie';
 import { useAuth } from '../../utils/AuthContext';
+import Waiting from "../Member/Waiting";
+
 
 export default function Login() {
     const navigate = useNavigate();
@@ -46,6 +48,14 @@ export default function Login() {
         setInputValues({ ...inputValues, [name]: value });
     };
 
+    const SaveLoginValues = async (token, fname, lname) => {
+        Cookies.set('email', email, { expires: 2 });
+        Cookies.set('auth-token', token, { expires: 2 });
+        localStorage.setItem('user', email);
+        const fullname = `${fname} ${lname}`;
+        localStorage.setItem('username', fullname);
+    }
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         const validationErrors = validate();
@@ -64,30 +74,34 @@ export default function Login() {
                     const decryptedData = CryptoJS.DES.decrypt(response.data.user, 'loginData');
                     const user = JSON.parse(decryptedData.toString(CryptoJS.enc.Utf8));
 
-                    Cookies.set('email', user.email, { expires: 2 });
-                    Cookies.set('auth-token', response.data.token, { expires: 2 });
-                    localStorage.setItem('user', user.email);
-                    const fullname = `${user.firstname} ${user.lastname}`;
-                    localStorage.setItem('username', fullname);
-
                     // Store the role and normalize it
                     const userRole = response.data.role
                     localStorage.setItem('role', userRole);
-
+                    const user_status = response.data.user_status
+                    console.log(user_status);
                     // Debugging to verify the role is stored correctly
                     console.log("Stored role in localStorage:", localStorage.getItem('role'));
+
+                    const fname = user.firstname;
+                    const lname = user.lastname;
 
                     // Role-based navigation
                     if (userRole === "leader") {
                         toast.success("Login Successfully");
+                        SaveLoginValues(response.data.token, fname, lname)
                         setIsLogin(true);
                         login();
                         navigate("/leader", { message: "Login Successfully" });
                     } else if (userRole === "member") {
-                        toast.success("Login Successfully");
-                        setIsLogin(true);
-                        login();
-                        navigate("/home", { message: "Login successful" });
+                        if (user_status === "pending") {
+                            navigate('/wait')
+                        } else if (user_status === "confirmed") {
+                            toast.success("Login Successfully");
+                            SaveLoginValues(response.data.token, fname, lname)
+                            setIsLogin(true);
+                            login();
+                            navigate("/home", { message: "Login successful" });
+                        }
                     } else {
                         toast.error("Invalid role specified");
                     }

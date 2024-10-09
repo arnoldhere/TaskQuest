@@ -99,7 +99,7 @@ const SignupForm = () => {
                 });
                 // Handle response based on status
                 if (res.status === 201) {
-                    if (res.data.user_status === "active") {
+                    if (res.data.user_status === "confirmed") {
                         toast.success(res.data.message);
                         navigate("/login", { state: { message: res.data.message } })
                     } else if (res.data.user_status === "pending") {

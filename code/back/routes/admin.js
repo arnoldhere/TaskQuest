@@ -46,7 +46,9 @@ router.put('/approve-user/:id', async (req, res) => {
 router.get('/fetch-users', async (req, res) => {
     try {
         const users = await User.find();
-        res.status(201).json({ message: 'Users fetched successfully !!', users: users });
+        const users_count = await User.countDocuments();
+        console.log(users_count);
+        res.status(201).json({ message: 'Users fetched successfully !!', users: users, users_count: users_count });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
