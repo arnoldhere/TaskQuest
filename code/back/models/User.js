@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     password: String,
     role: { type: String, default: "member" },
     status: { type: String, default: "pending" },
-    joined: { type: String, default: Date.now() },
+    joined: { type: Date, default: Date.now() },
     Avatar: Buffer,
     OtpToken: {
         type: String,

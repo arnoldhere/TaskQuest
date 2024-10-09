@@ -3,7 +3,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../utils/AuthContext";
 import Cookies from 'js-cookie';
-import AdminNavbar from '../MenuBar/AdminNavbar';
+import Loader from '../Loader';
+// import AdminNavbar from '../MenuBar/AdminNavbar';
 
 export default function AdminDashboard() {
   const { isAuthenticated } = useAuth();
@@ -17,7 +18,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <AdminNavbar />
+      <Loader/>
       ADMiN dashboard
       <Toaster />
     </>

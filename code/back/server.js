@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const Auth = require("./routes/auth")
 const Task = require("./routes/task")
+const Admin = require("./routes/admin")
 
 // Mongodb configuration
 const MongodbURL = process.env.MONGODB_URL;
@@ -32,6 +33,7 @@ app.use(cors({
 // routes configuration
 app.use('/auth', Auth);
 app.use('/task', Task);
+app.use('/admin', Admin);
 
 //start the server
 app.listen(port, () => {
