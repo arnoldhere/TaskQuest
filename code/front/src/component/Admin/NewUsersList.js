@@ -44,11 +44,24 @@ export default function NewUsersList() {
         fetchPendingUsers(); // Call the fetch function
     }, []);
 
-    // Handle approve action
-    const handleApprove = (userId) => {
-        console.log(`Approving user with ID: ${userId}`);
-        setPendingUsers(pendingUsers.filter(user => user.id !== userId)); // Remove user from state
+    const handleApprove = async (userId) => {
+        try {
+            // Send request to update user status to 'confirmed'
+            const res = await axios.put(`http://localhost:3333/admin/approve-user/${userId}`);
+
+            if (res.status === 201) {
+                // Immediately update the local state after success
+                setPendingUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
+                toast.success('User approved successfully');
+            } else {
+                toast.error(res.data.message);
+            }
+        } catch (error) {
+            console.error('Error approving user:', error);
+            toast.error('An error occurred while approving the user.');
+        }
     };
+
 
     // Handle reject action
     const handleReject = (userId) => {
@@ -93,7 +106,7 @@ export default function NewUsersList() {
                                                 color="primary"
                                                 size="small"
                                                 startIcon={<CheckCircleOutlineIcon />}
-                                                onClick={() => handleApprove(user.id)}
+                                                onClick={() => handleApprove(user._id)}
                                                 className="bg-green-500 hover:bg-green-600"
                                             >
                                                 Approve

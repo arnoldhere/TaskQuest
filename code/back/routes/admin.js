@@ -25,4 +25,30 @@ router.get('/fetch-newusers', async (req, res) => {
 
 });
 
+router.put('/approve-user/:id', async (req, res) => {
+    try {
+        const userId = req.params.id
+        console.log(userId);
+
+        // Update the user status to 'confirmed'
+        const user = await User.findByIdAndUpdate(userId, { status: 'confirmed' }, { new: true });
+
+        if (user) {
+            res.status(201).json({ message: 'User approved successfully', user });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error occurred while approving the user', error });
+    }
+});
+
+router.get('/fetch-users', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(201).json({ message: 'Users fetched successfully !!', users: users });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 module.exports = router;
