@@ -1,5 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
+import axios from "axios";
+import toast from "react-hot-toast";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -17,13 +19,20 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('login', true);
     };
 
-    const logout = () => {
+    const logout = async() => {
         setIsAuthenticated(false);
-        localStorage.removeItem('login');
-        localStorage.removeItem('user');
-        localStorage.removeItem('username');
-        Cookies.remove('auth-token');
-        Cookies.remove("email");
+        const email = Cookies.get('email');
+        const res = await axios.post('http://localhost:3333/logout', { email });
+        if (res.status === 201) {
+            localStorage.removeItem('login');
+            localStorage.removeItem('user');
+            localStorage.removeItem('username');
+            Cookies.remove('auth-token');
+            Cookies.remove("email");
+            // toast.success(res.data.message);
+        } else {
+            toast.error("Try again ! Can't log out");
+        }
     };
 
     return (

@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     OtpTokenExpires: {
         type: Date, // Use Date for storing time
     },
+    is_Active: {
+        type: Boolean,
+        default: false,  // Default value for new users
+    },
 });
 
 // You can add a method to set OTP token with expiry in minutes

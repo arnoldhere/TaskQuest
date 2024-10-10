@@ -7,7 +7,8 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const Auth = require("./routes/auth")
 const Task = require("./routes/task")
-const Admin = require("./routes/admin")
+const Admin = require("./routes/admin");
+const User = require('./models/User');
 
 // Mongodb configuration
 const MongodbURL = process.env.MONGODB_URL;
@@ -34,6 +35,27 @@ app.use(cors({
 app.use('/auth', Auth);
 app.use('/task', Task);
 app.use('/admin', Admin);
+
+app.use('/logout', async (req, res) => {
+    const { email } = req.body;
+    console.log(email);
+
+    try {
+        const user = await User.findOne({ email: email });
+        console.log(user);
+
+        // Set is_Active to false on logout
+        user.is_Active = false;
+        await user.save(); // Save the updated user document
+
+        res.status(201).json({ message: 'Logout successful' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+
+});
 
 //start the server
 app.listen(port, () => {

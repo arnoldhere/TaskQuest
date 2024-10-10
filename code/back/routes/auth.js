@@ -39,6 +39,12 @@ router.post("/login-member", async (req, res) => {
 
         if (matchedPassword) {
             console.log("Matched password successfully");
+
+            // Update is_Active to true upon successful login
+            user.is_Active = true;
+            await user.save();
+
+            
             if (user.role === user_data.role) {
                 console.log("logged in successfully")
                 // encrypt your data

@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { CssVarsProvider, CssBaseline, GlobalStyles, Box, Typography, Stack, Divider, Button, FormControl, FormLabel, Input } from '@mui/joy';
 import '../../css/App.css';
 import toast, { Toaster } from 'react-hot-toast';
-import Select from "@mui/joy/Select"
-import Option from '@mui/joy/Option';
 import { useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 import axios from 'axios';
