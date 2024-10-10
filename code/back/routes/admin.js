@@ -7,8 +7,12 @@ const CryptoJS = require("crypto-js");
 router.get('/fetch-newusers', async (req, res) => {
 
     try {
-        // users with status 'pending'
-        const pendingUsers = await User.find({ status: "pending" });
+
+        // Find users with status 'pending' and role not equal to 'admin'
+        const pendingUsers = await User.find({
+            status: "pending",
+            role: { $ne: "admin" }
+        });
 
         // If no users found, respond with an empty array
         if (!pendingUsers || pendingUsers.length === 0) {
@@ -45,7 +49,11 @@ router.put('/approve-user/:id', async (req, res) => {
 
 router.get('/fetch-users', async (req, res) => {
     try {
-        const users = await User.find();
+        // Find users role not equal to 'admin'
+        const users = await User.find({
+            role: { $ne: "admin" }
+        });
+
         const users_count = await User.countDocuments();
         console.log(users_count);
         res.status(201).json({ message: 'Users fetched successfully !!', users: users, users_count: users_count });
