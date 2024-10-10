@@ -49,9 +49,9 @@ export default function Login() {
     };
 
     const SaveLoginValues = async (token, fname, lname) => {
-        Cookies.set('email', email, { expires: 2 });
+        Cookies.set('email', inputValues.email, { expires: 2 });
         Cookies.set('auth-token', token, { expires: 2 });
-        localStorage.setItem('user', email);
+        localStorage.setItem('user', inputValues.email);
         const fullname = `${fname} ${lname}`;
         localStorage.setItem('username', fullname);
     }
