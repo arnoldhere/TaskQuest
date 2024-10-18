@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     AppBar,
     Toolbar,
@@ -27,9 +27,9 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 
-const NavButton = motion(ListItem);
+const NavButton = motion.create(ListItem);
 
-export default function SmoothNavbar() {
+export default function LeaderNavbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const isMobile = useMediaQuery('(max-width: 600px)');
     const { logout } = useAuth();
@@ -57,7 +57,7 @@ export default function SmoothNavbar() {
     };
 
     const navItems = [
-        { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard' },
+        { text: 'Dashboard', icon: <DashboardIcon />, href: '/leader/dashboard' },
         { text: 'Team', icon: <GroupIcon />, href: '/leader/team' },
         { text: 'Tasks', icon: <AssignmentIcon />, href: '/tasks' },
         { text: 'Messages', icon: <MessageIcon />, href: '/messages' },
@@ -73,7 +73,8 @@ export default function SmoothNavbar() {
                     <NavButton
                         button
                         key={item.text}
-                        component={motion.a}
+                        // component={motion.a}
+                        component="a"
                         href={item.href}
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -90,13 +91,17 @@ export default function SmoothNavbar() {
 
     return (
         <>
-            <AppBar position="sticky" className="bg-slate-800  ">
+            <AppBar position="sticky" sx={{
+                backgroundColor: 'rgb(30 41 59)'
+            }}>
                 <Toolbar>
                     {isMobile && (
                         <IconButton
                             color="inherit"
                             aria-label="open drawer"
                             edge="start"
+                            component="div" // Change to "div" to avoid button nesting issues
+                            transition={{ type: "spring", stiffness: 260, damping: 20 }}
                             onClick={handleDrawerToggle}
                             className="mr-2"
                         >
@@ -113,8 +118,8 @@ export default function SmoothNavbar() {
                                     key={item.text}
                                     to={item.href}
                                     className="flex items-center px-4 py-2 hover:bg-gray-200 hover:text-red-500 rounded transition duration-200"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    whilehover={{ scale: 1.05 }}
+                                    whiletap={{ scale: 0.95 }}
                                 >
                                     <span className="text-red-200">{item.icon}</span>
                                     <Typography className="ml-2">{item.text}</Typography>
@@ -125,7 +130,7 @@ export default function SmoothNavbar() {
                     <IconButton
                         color="inherit"
                         aria-label="settings"
-                        component={motion.button}
+                        component="div"
                         transition={{ type: "spring", stiffness: 260, damping: 20 }}
                     >
                         <Menu as="div" className="relative ml-3">

@@ -1,26 +1,25 @@
-import React, { useEffect } from 'react'
-import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
 import { useAuth } from "../../utils/AuthContext";
-import Cookies from 'js-cookie';
-import LeaderNavbar from '../MenuBar/LeaderNavbar';
+import LeaderProjects from "./LeaderProjects";
+import Cookies from "js-cookie"
 
 export default function LeaderDashboard() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     const authToken = Cookies.get('auth-token');
-    if (isAuthenticated && authToken) {
-      navigate('/leader');
-    } else {
-      navigate("/login", { message: "Authentication forbidden !! login required" })
+    if (!isAuthenticated && !authToken) {
+      navigate("/login", { message: "Authentication forbidden !! login required" });
     }
   }, [isAuthenticated, navigate]);
 
   return (
     <>
-    <LeaderNavbar/>
+      <LeaderProjects />
       <Toaster />
     </>
-  )
+  );
 }
