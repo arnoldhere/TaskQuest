@@ -5,6 +5,8 @@ import { useAuth } from "../../utils/AuthContext";
 import Cookies from 'js-cookie';
 import axios from 'axios';
 import Loader from '../Loader';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelIcon from '@mui/icons-material/Cancel';
 import {
   Typography,
   Container,
@@ -22,6 +24,7 @@ import {
   Fade,
   TablePagination,
   TextField,
+  Button
 } from '@mui/material';
 import { styled } from '@mui/system';
 
@@ -53,11 +56,11 @@ export default function AdminDashboard() {
   const toastShownRef = useRef(false);
 
   const [fetchedUsers, setFetchedUsers] = useState([]);
+  // const [ActiveUsersCount, setActiveUsersCount] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scorecardData, setScorecardData] = useState([
     { title: 'Total Users', value: 0 },
     { title: 'Active Users', value: null },
-    { title: 'New Users', value: null }
   ]);
 
   const [page, setPage] = useState(0);
@@ -73,9 +76,10 @@ export default function AdminDashboard() {
           setFetchedUsers(res.data.users || []);
           setScorecardData([
             { title: 'Total Users', value: res.data.users_count },
-            { title: 'Active Users', value: 789 },
-            { title: 'New Users', value: 56 }
+            // { title: 'Active Users', value: res.data. },
+            { title: 'Active Users', value: 5 },
           ]);
+
           if (!toastShownRef.current) {
             toast.success(res.data.message);
             toastShownRef.current = true;
@@ -120,6 +124,52 @@ export default function AdminDashboard() {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+
+  // Handle reject action
+  const handleReject = async (userId) => {
+    console.log(`Rejecting user with ID: ${userId}`);
+    try {
+      // Send request to update user status to 'confirmed'
+      const res = await axios.put(`http://localhost:3333/admin/reject-user/${userId}`);
+
+      if (res.status === 201) {
+        // Immediately update the local state after success
+        toast.success('User disabled successfully');
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      console.error('Error approving user:', error);
+      toast.error('An error occurred while approving the user.');
+    }
+  };
+
+
+  const makeLeader = async (userId) => {
+    console.log(`Rejecting user with ID: ${userId}`);
+    try {
+      // Send request to update user status to 'confirmed'
+      const res = await axios.put(`http://localhost:3333/admin/make-leader/${userId}`);
+
+      if (res.status === 201) {
+        // Immediately update the local state after success
+        // Update the local state with the modified user role
+        setFetchedUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === userId ? { ...user, role: 'leader' } : user
+          )
+        );
+        toast.success('User promoted successfully');
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      console.error('Error promoting user:', error);
+      toast.error('An error occurred while approving the user.');
+    }
+  };
+
 
   return (
     <>
@@ -169,7 +219,9 @@ export default function AdminDashboard() {
                       <TableCell>Name</TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Role</TableCell>
+                      <TableCell>Status</TableCell>
                       <TableCell>Joined</TableCell>
+                      <TableCell>Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -182,12 +234,38 @@ export default function AdminDashboard() {
                             <TableCell>{user.firstname + " " + user.lastname}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>{user.role}</TableCell>
+                            <TableCell>{user.status}</TableCell>
                             <TableCell>
                               {new Date(user.joined).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
                               })}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="contained"
+                                  color="secondary"
+                                  size="small"
+                                  startIcon={<CancelIcon />}
+                                  onClick={() => handleReject(user._id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  Disable
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  size="small"
+                                  startIcon={<CheckCircleOutlineIcon />}
+                                  onClick={() => makeLeader(user._id)}
+                                  className="hover:bg-blue-600"
+                                >
+                                  Make leader
+                                </Button>
+
+                              </div>
                             </TableCell>
                           </AnimatedTableRow>
                         </Fade>

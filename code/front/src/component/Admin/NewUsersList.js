@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import {
     Table,
@@ -17,7 +17,8 @@ import toast from 'react-hot-toast';
 
 export default function NewUsersList() {
     const [pendingUsers, setPendingUsers] = useState([]); // State to hold pending users
-    const [loading, setLoading] = useState(true); // State to show/hide loader
+    const [loading, setLoading] = useState(true); // State to show/hide loade
+    const toastShownRef = useRef(false);
 
     // Fetch pending users on component mount
     useEffect(() => {
@@ -29,9 +30,15 @@ export default function NewUsersList() {
                 if (res.status === 201) {
                     setPendingUsers(res.data.users || []); // Set users to state
                     console.log(res.data.users);
-                    toast.success(res.data.message);
+                    if (!toastShownRef.current) {
+                        toast.success(res.data.message);
+                        toastShownRef.current = true;
+                    }
                 } else {
-                    toast.error(res.data.message);
+                    if (!toastShownRef.current) {
+                        toast.error(res.data.message);
+                        toastShownRef.current = true;
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching new users:', error);
@@ -103,23 +110,13 @@ export default function NewUsersList() {
                                         <div className="flex space-x-2">
                                             <Button
                                                 variant="contained"
-                                                color="primary"
+                                                color="success"
                                                 size="small"
                                                 startIcon={<CheckCircleOutlineIcon />}
                                                 onClick={() => handleApprove(user._id)}
-                                                className="bg-green-500 hover:bg-green-600"
+                                                className="hover:bg-blue-600"
                                             >
                                                 Approve
-                                            </Button>
-                                            <Button
-                                                variant="contained"
-                                                color="secondary"
-                                                size="small"
-                                                startIcon={<CancelIcon />}
-                                                onClick={() => handleReject(user.id)}
-                                                className="bg-red-500 hover:bg-red-600"
-                                            >
-                                                Reject
                                             </Button>
                                         </div>
                                     </TableCell>

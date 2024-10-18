@@ -230,8 +230,9 @@ router.post('/request-otp', async (req, res) => {
 
         const SendEmail = await transporter.sendMail({
             to: email,
-            subject: 'Password Reset OTP || TaskQuest',
-            text: `Your OTP is ${otp}. It will expire in 5 minutes.`
+            subject: 'Happy Hacking'
+            // subject: 'Password Reset OTP || TaskQuest',
+            // text: `Your OTP is ${otp}. It will expire in 5 minutes.`
         });
 
 

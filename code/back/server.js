@@ -24,7 +24,7 @@ app.use(bodyParser.json()); // For parsing application/json
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(cors({
-    origin: "*",
+    origin: ["http://192.168.133.1:3000/", "http://localhost:3000",],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true // If you need to send cookies or other credentials
