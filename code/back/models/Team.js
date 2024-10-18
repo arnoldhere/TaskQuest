@@ -8,6 +8,6 @@ const teamSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-const Project = mongoose.model("Project", projectSchema);
+const team = mongoose.model("Team", teamSchema);
 
-module.exports = Project;
+module.exports = team;
