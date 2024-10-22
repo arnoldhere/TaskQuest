@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const Auth = require("./routes/auth")
 const Task = require("./routes/task")
 const Admin = require("./routes/admin");
+const Leader = require("./routes/leader");
 const User = require('./models/User');
 
 // Mongodb configuration
@@ -24,7 +25,7 @@ app.use(bodyParser.json()); // For parsing application/json
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(cors({
-    origin: ["http://192.168.133.1:3000/", "http://localhost:3000",],
+    origin: ["http://192.168.133.1:3000/", "http://localhost:3000", "http://127.0.0.1:3000"],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true // If you need to send cookies or other credentials
@@ -35,6 +36,7 @@ app.use(cors({
 app.use('/auth', Auth);
 app.use('/task', Task);
 app.use('/admin', Admin);
+app.use('/leader', Leader);
 
 app.use('/logout', async (req, res) => {
     const { email } = req.body;

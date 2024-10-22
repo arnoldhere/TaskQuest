@@ -56,6 +56,7 @@ export default function AdminLogin() {
             try {
                 inputValues.role = "admin";
                 const encryptedData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'loginData').toString();
+                const token = Cookies.get("auth-token");
                 const response = await axios.post("http://localhost:3333/auth/login-admin", { data: encryptedData });
 
                 if (response.status === 201) {
@@ -174,9 +175,9 @@ export default function AdminLogin() {
 
                                     <div className='d-flex justify-content-center'>
                                         <Link to="/leader/login">
-                                        <button class="bg-blue-500 hover:bg-red-400 text-white font-bold py-2 px-4 rounded-full mx-2">
-                                            Leader
-                                        </button>
+                                            <button class="bg-blue-500 hover:bg-red-400 text-white font-bold py-2 px-4 rounded-full mx-2">
+                                                Leader
+                                            </button>
                                         </Link>
                                         <Link to="/login">
                                             <button class="bg-red-400 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mx-2">

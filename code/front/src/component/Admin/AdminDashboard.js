@@ -71,7 +71,12 @@ export default function AdminDashboard() {
     const FetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:3333/admin/fetch-users');
+        const token = Cookies.get("auth-token");
+        const res = await axios.get('http://localhost:3333/admin/fetch-users', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
         if (res.status === 201) {
           setFetchedUsers(res.data.users || []);
           setScorecardData([
@@ -127,11 +132,16 @@ export default function AdminDashboard() {
 
 
   // Handle reject action
-  const handleReject = async (userId) => {
-    console.log(`Rejecting user with ID: ${userId}`);
+  const handleReject = async (id) => {
+    console.log(`Rejecting user with ID: ${id}`);
     try {
+      const token = Cookies.get("auth-token");
       // Send request to update user status to 'confirmed'
-      const res = await axios.put(`http://localhost:3333/admin/reject-user/${userId}`);
+      const res = await axios.put(`http://localhost:3333/admin/reject-user/${id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
 
       if (res.status === 201) {
         // Immediately update the local state after success
@@ -141,16 +151,21 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error approving user:', error);
-      toast.error('An error occurred while approving the user.');
+      toast.error('An error occurred while disabling the user.');
     }
   };
 
 
   const makeLeader = async (userId) => {
-    console.log(`Rejecting user with ID: ${userId}`);
+    console.log(`Making leader user with ID: ${userId}`);
     try {
+      const token = Cookies.get("auth-token")
       // Send request to update user status to 'confirmed'
-      const res = await axios.put(`http://localhost:3333/admin/make-leader/${userId}`);
+      const res = await axios.put(`http://localhost:3333/admin/make-leader/${userId}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
 
       if (res.status === 201) {
         // Immediately update the local state after success
@@ -166,7 +181,7 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error promoting user:', error);
-      toast.error('An error occurred while approving the user.');
+      toast.error('Internal server error');
     }
   };
 

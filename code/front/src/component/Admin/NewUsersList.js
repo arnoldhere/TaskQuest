@@ -14,6 +14,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Loader from '../Loader';
 import toast from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 export default function NewUsersList() {
     const [pendingUsers, setPendingUsers] = useState([]); // State to hold pending users
@@ -24,8 +25,13 @@ export default function NewUsersList() {
     useEffect(() => {
         const fetchPendingUsers = async () => {
             try {
+                const token = Cookies.get("auth-token");
                 setLoading(true); // Show loader while fetching users
-                const res = await axios.get('http://localhost:3333/admin/fetch-newusers'); // Fetch users
+                const res = await axios.get('http://localhost:3333/admin/fetch-newusers', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                }); // Fetch users
 
                 if (res.status === 201) {
                     setPendingUsers(res.data.users || []); // Set users to state
@@ -42,7 +48,7 @@ export default function NewUsersList() {
                 }
             } catch (error) {
                 console.error('Error fetching new users:', error);
-                toast.error('An error occurred while fetching users.');
+                toast.error('An error occurred  or unauthorized access');
             } finally {
                 setLoading(false); // Hide loader after fetching users
             }
@@ -53,8 +59,14 @@ export default function NewUsersList() {
 
     const handleApprove = async (userId) => {
         try {
+            const token = Cookies.get("auth-token");
             // Send request to update user status to 'confirmed'
-            const res = await axios.put(`http://localhost:3333/admin/approve-user/${userId}`);
+            const res = await axios.put(`http://localhost:3333/admin/approve-user/${userId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
+            }
+            );
 
             if (res.status === 201) {
                 // Immediately update the local state after success
@@ -69,13 +81,6 @@ export default function NewUsersList() {
         }
     };
 
-
-    // Handle reject action
-    const handleReject = (userId) => {
-        console.log(`Rejecting user with ID: ${userId}`);
-        setPendingUsers(pendingUsers.filter(user => user.id !== userId)); // Remove user from state
-    };
-
     // Show loader while fetching data
     if (loading) {
         return <Loader />; // Display loader while fetching users
@@ -88,7 +93,7 @@ export default function NewUsersList() {
             <TableContainer component={Paper} className="max-h-96 overflow-auto">
                 <Table stickyHeader>
                     <TableHead>
-                        <TableRow >
+                        <TableRow>
                             <TableCell className="font-semibold">Sr.</TableCell>
                             <TableCell className="font-semibold">Name</TableCell>
                             <TableCell className="font-semibold">Email</TableCell>

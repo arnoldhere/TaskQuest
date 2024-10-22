@@ -159,7 +159,7 @@ export default function Navbar() {
           }
         </div>
       </div>
-
+{/* 
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pb-3 pt-2">
           {menus.map((item) => (
@@ -177,7 +177,7 @@ export default function Navbar() {
             </DisclosureButton>
           ))}
         </div>
-      </DisclosurePanel>
+      </DisclosurePanel> */}
     </Disclosure>
   );
 }

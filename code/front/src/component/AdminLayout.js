@@ -26,6 +26,7 @@ import {
 	Settings as SettingsIcon,
 	ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
+import TaskIcon from '@mui/icons-material/Task';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -33,7 +34,8 @@ const drawerWidth = 200;
 
 const navItems = [
 	{ text: 'Dashboard', icon: <DashboardIcon />, to: '/admin/dashboard' },
-	{ text: 'New Users', icon: <PersonIcon />, to: '/admin/new-users' },
+	{ text: 'Pending Users', icon: <PersonIcon />, to: '/admin/new-users' },
+	{ text: 'Projects', icon: <TaskIcon />, to: '/admin/projects' },
 	{ text: 'Settings', icon: <SettingsIcon />, to: '/admin/settings' },
 ];
 

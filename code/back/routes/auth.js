@@ -6,6 +6,8 @@ const bcrypt = require("bcrypt"); // for  password hashing
 const createToken = require("../utils/Token");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const authMiddleware = require("../middlewares/auth")
+
 
 /************ LOGIN & AUTHENTICATE user *************/
 router.post("/login-member", async (req, res) => {
@@ -44,7 +46,7 @@ router.post("/login-member", async (req, res) => {
             user.is_Active = true;
             await user.save();
 
-            
+
             if (user.role === user_data.role) {
                 console.log("logged in successfully")
                 // encrypt your data
@@ -230,9 +232,9 @@ router.post('/request-otp', async (req, res) => {
 
         const SendEmail = await transporter.sendMail({
             to: email,
-            subject: 'Happy Hacking'
-            // subject: 'Password Reset OTP || TaskQuest',
-            // text: `Your OTP is ${otp}. It will expire in 5 minutes.`
+            // subject: 'Happy Hacking'
+            subject: 'Password Reset OTP || TaskQuest',
+            text: `Your OTP is ${otp}. It will expire in 5 minutes.`
         });
 
 
@@ -306,8 +308,6 @@ router.post('/updatePassword', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-
-
 
 
 /************ REGISTER user *************/

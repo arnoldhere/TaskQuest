@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { CssVarsProvider } from "@mui/joy/styles";
 import GlobalStyles from "@mui/joy/GlobalStyles";
 import CssBaseline from "@mui/joy/CssBaseline";
+import Cookies from "js-cookie";
 import Box from "@mui/joy/Box";
 import Button from "@mui/joy/Button";
 import Divider from "@mui/joy/Divider";
@@ -92,6 +93,8 @@ const SignupForm = () => {
                 // encrypt your data
                 const finalData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'signupData').toString();
                 console.log(finalData);
+
+                const token = Cookies.get("auth-token");
 
                 // send the data to backend through axios api 
                 const res = await axios.post("http://localhost:3333/auth/register", {

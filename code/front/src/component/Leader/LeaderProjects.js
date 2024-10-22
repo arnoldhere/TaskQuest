@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Card,
@@ -17,31 +17,104 @@ import {
     DialogActions,
     TextField,
     MenuItem,
-    IconButton
+    IconButton,
+    Grow,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Container,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Assignment, Group, CheckCircle, Schedule, ErrorOutline, Add, Visibility } from '@mui/icons-material';
+import Cookies from "js-cookie";
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import Loader from '../Loader';
+import { styled } from '@mui/system';
 
-// Mock data
-const initialProjects = [
-    { id: 1, name: 'Website Redesign', status: 'In Progress', description: 'Redesigning the company website for better user experience and modern look.' },
-    { id: 2, name: 'Mobile App Development', status: 'Completed', description: 'Developed a new mobile app for both iOS and Android platforms.' },
-    { id: 3, name: 'Database Migration', status: 'Delayed', description: 'Migrating the current database to a more scalable solution.' },
-    { id: 4, name: 'AI Integration', status: 'In Progress', description: 'Integrating AI capabilities into our existing product suite.' },
-    { id: 5, name: 'Security Audit', status: 'Not Started', description: 'Conducting a comprehensive security audit of all our systems.' },
-];
-
-const teamCount = 8;
+const initialProjects = [];
 
 const MotionCard = motion(Card);
+
+const StyledCard = styled(Card)(({ theme }) => ({
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing(2),
+    boxShadow: (theme.shadows && theme.shadows[3]) ? theme.shadows[3] : '0px 4px 20px rgba(0, 0, 0, 0.2)', // Fallback for undefined shadow
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    '&:hover': {
+        transform: 'scale(1.05)',
+        boxShadow: (theme.shadows && theme.shadows[8]) ? theme.shadows[8] : '0px 8px 30px rgba(0, 0, 0, 0.3)', // Fallback for undefined shadow
+    },
+}));
 
 export default function LeaderProjects() {
     const theme = useTheme();
     const [projects, setProjects] = useState(initialProjects);
     const [openDialog, setOpenDialog] = useState(false);
-    const [newProject, setNewProject] = useState({ name: '', status: 'Not Started', description: '' });
     const [selectedProject, setSelectedProject] = useState(null);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const toastShownRef = useRef(false);
+
+
+    const [scorecardData, setScorecardData] = useState([
+        { title: 'Total Projects', value: 0 },
+    ]);
+
+    const token = Cookies.get("auth-token");
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+
+                const user_email = Cookies.get('email');
+                setLoading(true);
+                console.log(user_email)
+                const res = await axios.get(`http://localhost:3333/leader/fetch-projects/${user_email}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                if (res.status === 201) {
+                    setProjects(res.data.projects);
+                    setScorecardData([
+                        { title: 'Total Projects', value: res.data.projects_count },
+                    ]);
+
+                    if (!toastShownRef.current) {
+                        toast.success(res.data.message);
+                        toastShownRef.current = true;
+                    }
+                } else {
+                    if (!toastShownRef.current) {
+                        toast.error(res.data.message);
+                        toastShownRef.current = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+                toast.error('Internal server error.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjects();
+    }, []);
+
+    const [inputValues, setInputValues] = useState({ name: '', status: 'Not Started', description: '', leader: '' });
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setInputValues({ ...inputValues, [name]: value });
+    };
 
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
@@ -52,11 +125,31 @@ export default function LeaderProjects() {
     };
     const handleCloseDetailsDialog = () => setOpenDetailsDialog(false);
 
-    const handleAddProject = () => {
-        if (newProject.name) {
-            setProjects([...projects, { id: projects.length + 1, ...newProject }]);
-            setNewProject({ name: '', status: 'Not Started', description: '' });
-            handleCloseDialog();
+    const handleAddProject = async () => {
+        if (!inputValues.name || !inputValues.status || !inputValues.description) {
+            toast.error("All fields are required.");
+            return;
+        }
+
+        try {
+            const user_email = Cookies.get('email');
+            const res = await axios.post("http://localhost:3333/admin/add-project", { data: inputValues, user: user_email }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
+            });
+
+            if (res.status === 201) {
+                toast.success(res.data.message);
+                handleCloseDialog();
+                setInputValues({ name: '', status: 'Not Started', description: '' });
+                setProjects([...projects, res.data.project]); // Add new project to the list
+            } else {
+                toast.error(res.data.message || "Error adding project.");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            toast.error('Internal error occurred.');
         }
     };
 
@@ -90,175 +183,119 @@ export default function LeaderProjects() {
         }
     };
 
+    if (loading) {
+        return <Loader />;
+    }
+
     return (
-        <Box sx={{ flexGrow: 1, p: 3, backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
+        <Container sx={{ mt: 4, mb: 4 }}>
+
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                    <MotionCard
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        sx={{ height: '100%' }}
-                    >
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Total Projects
-                            </Typography>
-                            <Box display="flex" alignItems="center">
-                                <Assignment sx={{ fontSize: 48, color: theme.palette.primary.main, mr: 2 }} />
-                                <Typography variant="h3">{projects.length}</Typography>
-                            </Box>
-                        </CardContent>
-                    </MotionCard>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <MotionCard
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        sx={{ height: '100%' }}
-                    >
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Total Teams
-                            </Typography>
-                            <Box display="flex" alignItems="center">
-                                <Group sx={{ fontSize: 48, color: theme.palette.secondary.main, mr: 2 }} />
-                                <Typography variant="h3">{teamCount}</Typography>
-                            </Box>
-                        </CardContent>
-                    </MotionCard>
-                </Grid>
-                <Grid item xs={12}>
-                    <MotionCard
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                        <CardContent>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                <Typography variant="h5">
-                                    Project List
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<Add />}
-                                    onClick={handleOpenDialog}
-                                >
-                                    Add Project
-                                </Button>
-                            </Box>
-                            <List>
-                                {projects.map((project, index) => (
-                                    <motion.div
-                                        key={project.id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    >
-                                        <ListItem
-                                            divider
-                                            secondaryAction={
-                                                <IconButton edge="end" aria-label="view details" onClick={() => handleOpenDetailsDialog(project)}>
-                                                    <Visibility /> <p className='text-red-500'>View</p>
-                                                </IconButton>
-                                            }
-                                        >
-                                            <ListItemText
-                                                primary={project.name}
-                                                secondary={
-                                                    <Chip
-                                                        icon={getStatusIcon(project.status)}
-                                                        label={project.status}
-                                                        size="small"
-                                                        sx={{
-                                                            backgroundColor: getStatusColor(project.status),
-                                                            color: theme.palette.getContrastText(getStatusColor(project.status)),
-                                                        }}
-                                                    />
-                                                }
-                                            />
-                                        </ListItem>
-                                    </motion.div>
-                                ))}
-                            </List>
-                        </CardContent>
-                    </MotionCard>
-                </Grid>
+                {scorecardData.map((card, index) => (
+                    <Grow in={true} key={index} timeout={500 * (index + 1)}>
+                        <Grid item xs={12} sm={4}>
+                            <StyledCard>
+                                <CardContent className='flex flex-col justify-center text-center'>
+                                    <Typography variant="h5" component="div" className='text-red-500'>
+                                        {card.title}
+                                    </Typography>
+                                    <Typography variant="h3" component="div" sx={{ mt: 2 }} className='text-gray-500'>
+                                        {card.value}
+                                    </Typography>
+                                </CardContent>
+                            </StyledCard>
+                        </Grid>
+                    </Grow>
+                ))}
             </Grid>
 
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>Add New Project</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        id="name"
-                        label="Project Name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={newProject.name}
-                        onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                    />
-                    <TextField
-                        select
-                        margin="dense"
-                        id="status"
-                        label="Project Status"
-                        fullWidth
-                        variant="outlined"
-                        value={newProject.status}
-                        onChange={(e) => setNewProject({ ...newProject, status: e.target.value })}
-                    >
-                        <MenuItem value="Not Started">Not Started</MenuItem>
-                        <MenuItem value="In Progress">In Progress</MenuItem>
-                        <MenuItem value="Completed">Completed</MenuItem>
-                        <MenuItem value="Delayed">Delayed</MenuItem>
-                    </TextField>
-                    <TextField
-                        margin="dense"
-                        id="description"
-                        label="Project Description"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        multiline
-                        rows={4}
-                        value={newProject.description}
-                        onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleAddProject} variant="contained">Add</Button>
-                </DialogActions>
-            </Dialog>
+            <Box sx={{ flexGrow: 1, p: 3, backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
 
-            <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
-                <DialogTitle>{selectedProject?.name}</DialogTitle>
-                <DialogContent>
-                    <Typography variant="body1" gutterBottom>
-                        Status:
-                        <Chip
-                            icon={getStatusIcon(selectedProject?.status)}
-                            label={selectedProject?.status}
-                            size="small"
-                            sx={{
-                                ml: 1,
-                                backgroundColor: getStatusColor(selectedProject?.status),
-                                color: theme.palette.getContrastText(getStatusColor(selectedProject?.status)),
-                            }}
-                        />
-                    </Typography>
-                    <Typography variant="body1" gutterBottom>
-                        Description: {selectedProject?.description}
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDetailsDialog}>Close</Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+
+                <Grid container spacing={3}>
+                    {projects.length > 0 ? (
+                        <Grid item xs={12}>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Project Name</TableCell>
+                                            <TableCell>Status</TableCell>
+                                            <TableCell>Description</TableCell>
+                                            <TableCell>Assigned to</TableCell>
+                                            <TableCell>Actions</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {projects.map((project, index) => {
+                                            if (!project) {
+                                                return null; // Skip rendering if the project is undefined or null
+                                            }
+
+                                            return (
+                                                <TableRow key={index}>
+                                                    <TableCell>{project.name}</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            icon={getStatusIcon(project.status)}
+                                                            label={project.status}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: getStatusColor(project.status),
+                                                                color: theme.palette.getContrastText(getStatusColor(project.status)),
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{project.description}</TableCell>
+                                                    <TableCell>{project.leader}</TableCell>
+                                                    <TableCell>
+                                                        <IconButton onClick={() => handleOpenDetailsDialog(project)}>
+                                                            <Visibility />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+
+                                </Table>
+                            </TableContainer>
+                        </Grid>
+                    ) : (
+                        <Typography variant="h6" sx={{ textAlign: 'center', width: '100%', mt: 4 }}>
+                            No projects found. Please add a project.
+                        </Typography>
+                    )}
+                </Grid>
+
+
+
+                {/* Project Details Dialog */}
+                <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
+                    <DialogTitle>{selectedProject?.name}</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1" gutterBottom>
+                            Status:
+                            <Chip
+                                icon={getStatusIcon(selectedProject?.status)}
+                                label={selectedProject?.status}
+                                size="small"
+                                sx={{
+                                    ml: 1,
+                                    backgroundColor: getStatusColor(selectedProject?.status),
+                                    color: theme.palette.getContrastText(getStatusColor(selectedProject?.status)),
+                                }}
+                            />
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                            Description: {selectedProject?.description}
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseDetailsDialog}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
+        </Container>
     );
 }

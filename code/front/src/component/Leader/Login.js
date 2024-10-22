@@ -19,11 +19,11 @@ export default function LeaderLogin() {
 
     useEffect(() => {
         const authToken = Cookies.get('auth-token');
-        if (isAuthenticated && authToken && localStorage.getItem('role')==="leader") {
+        if (isAuthenticated && authToken && localStorage.getItem('role') === "leader") {
             navigate('/leader');
         }
     }, [isAuthenticated, navigate]);
- 
+
     const validate = () => {
         const errors = {};
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,6 +55,7 @@ export default function LeaderLogin() {
             setErrors({});
             try {
                 inputValues.role = "leader";
+                const token = Cookies.get("auth-token");
                 const encryptedData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'loginData').toString();
                 const response = await axios.post("http://localhost:3333/auth/login-leader", { data: encryptedData });
 
@@ -165,12 +166,12 @@ export default function LeaderLogin() {
                                         </span>
                                     </Typography>
                                     <hr />
-                                    
+
                                     <div className='d-flex justify-content-center'>
                                         <Link to="/admin/login">
-                                        <button class="bg-blue-500 hover:bg-red-400 text-white font-bold py-2 px-4 rounded-full mx-2">
-                                            ADMIN
-                                        </button>
+                                            <button class="bg-blue-500 hover:bg-red-400 text-white font-bold py-2 px-4 rounded-full mx-2">
+                                                ADMIN
+                                            </button>
                                         </Link>
                                         <Link to="/login">
                                             <button class="bg-red-400 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mx-2">
@@ -178,7 +179,7 @@ export default function LeaderLogin() {
                                             </button>
                                         </Link>
                                     </div>
-                                    <hr/>
+                                    <hr />
                                 </Stack>
                             </Stack>
                             {/* <Divider sx={(theme) => ({ [theme.getColorSchemeSelector("light")]: { color: { xs: "#FFF", md: "text.tertiary" } } })}>

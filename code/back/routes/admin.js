@@ -3,8 +3,11 @@ const router = express.Router();
 const User = require("../models/User");
 const CryptoJS = require("crypto-js");
 const nodemailer = require("nodemailer");
+const Project = require("../models/Project");
+const authMiddleware = require("../middlewares/auth")
 
-router.get('/fetch-newusers', async (req, res) => {
+
+router.get('/fetch-newusers', authMiddleware, async (req, res) => {
 
     try {
 
@@ -29,7 +32,7 @@ router.get('/fetch-newusers', async (req, res) => {
 
 });
 
-router.put('/approve-user/:id', async (req, res) => {
+router.put('/approve-user/:id', authMiddleware, async (req, res) => {
     try {
         const userId = req.params.id
         console.log(userId);
@@ -68,12 +71,12 @@ router.put('/approve-user/:id', async (req, res) => {
     }
 });
 
-router.put('/reject-user/:id', async (req, res) => {
+router.put('/reject-user/:id', authMiddleware, async (req, res) => {
     try {
         const userId = req.params.id
-        console.log(userId);
+        console.log("Inside route " + userId);
 
-        // Update the user status to 'confirmed'
+        // Update the user status to 'confirmed' 
         const user = await User.findByIdAndUpdate(userId, { status: 'pending' }, { new: true });
 
         if (user) {
@@ -107,8 +110,7 @@ router.put('/reject-user/:id', async (req, res) => {
     }
 });
 
-
-router.put('/make-leader/:id', async (req, res) => {
+router.put('/make-leader/:id', authMiddleware, async (req, res) => {
     try {
         const userId = req.params.id
         console.log(userId);
@@ -147,8 +149,7 @@ router.put('/make-leader/:id', async (req, res) => {
     }
 });
 
-
-router.get('/fetch-users', async (req, res) => {
+router.get('/fetch-users', authMiddleware, async (req, res) => {
     try {
         // Find users role not equal to 'admin'
         const users = await User.find({
@@ -162,6 +163,70 @@ router.get('/fetch-users', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+router.get("/fetch-projects", authMiddleware, async (req, res) => {
+
+    const projects = await Project.find();
+    const users = await User.find(
+        { status: 'confirmed', role: 'leader' }, // Filter conditions
+        { email: 1, _id: 0 } // Projection: Include only email, exclude _id
+    );
+
+    const projects_count = await Project.countDocuments();
+    res.status(201).json({ message: 'Projects fetched successfully !!', projects: projects, projects_count: projects_count, users: users });
+})
+
+router.post('/add-project', authMiddleware, async (req, res) => {
+
+    const data = req.body.data;
+    const user = req.body.data.leader;
+    console.log(data);
+
+    try {
+
+        if (!data) {
+            return res.status(404).json({ message: "Empty Data Recieved.." });
+        }
+
+        const project = new Project({
+            name: data.name,
+            status: data.status,
+            description: data.description,
+            leader: user,
+        })
+
+        const saved = await project.save();
+        if (saved) {
+            const transporter = nodemailer.createTransport({
+                service: 'Gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            await transporter.sendMail({
+                to: user,
+                // subject: 'Happy Hacking'
+                subject: 'Attention here | TaskQuest',
+                text: `Dear sir/madam . \n You've assigned a new project login to system to get more details. \n from TaskQuest.`
+            });
+
+
+
+            return res.status(201).json({ message: "Project saved successfully" })
+        } else {
+            return res.status(400).json({ message: "Project can't save ! try again" })
+
+        }
+
+
+    } catch (error) {
+        console.error('Error updating password:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 
 module.exports = router;

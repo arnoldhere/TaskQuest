@@ -65,6 +65,7 @@ export default function Login() {
             setErrors({});
             try {
                 inputValues.role = "member";
+                const token = Cookies.get('auth-token');
                 const encryptedData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'loginData').toString();
                 const response = await axios.post("http://localhost:3333/auth/login-member", { data: encryptedData });
 

@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children }) => {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (authToken && !isAuthenticated) {
+		if (authToken && isAuthenticated) {
 			// If auth-token exists but isAuthenticated is false, assume user is logged in
 			login(); // Set isAuthenticated to true
 		} else if (!authToken) {
