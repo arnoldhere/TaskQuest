@@ -110,39 +110,49 @@ router.put('/reject-user/:id', authMiddleware, async (req, res) => {
     }
 });
 
-router.put('/make-leader/:id', authMiddleware, async (req, res) => {
+router.put('/toggleRole/:id', authMiddleware, async (req, res) => {
     try {
         const userId = req.params.id
         console.log(userId);
 
-        // Update the user status to 'confirmed'
-        const user = await User.findByIdAndUpdate(userId, { role: 'leader' }, { new: true });
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        if (user) {
-            const transporter = nodemailer.createTransport({
-                service: 'Gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS,
-                }
-            })
-
-            const message = `Dear ${user.firstname} !\n You've been promoted to leader. Kindly use your skills. Please contact to support team for any query. \n From taskQuest`;
-            const SendEmail = await transporter.sendMail({
-                to: user.email,
-                subject: "Congrats | TaskQuest",
-                text: message
-            })
-
-            if (SendEmail) {
-                res.status(201).json({ message: 'User promoted successfully', user });
-            }
-            else {
-                console.log("Error sending email !!")
-                res.status(500).json({ message: "Internal Server Error" })
-            }
+        // Update the user role based on the current role
+        if (user.role === "leader") {
+            user.role = "member";
+        } else if (user.role === "member") {
+            user.role = "leader";
         } else {
-            res.status(404).json({ message: 'User not found' });
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+
+        // Save the updated user to the database
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            }
+        })
+
+        const message = `Dear ${user.firstname} !\n You've been promoted to leader. Kindly use your skills. Please contact to support team for any query. \n From taskQuest`;
+        const SendEmail = await transporter.sendMail({
+            to: user.email,
+            subject: "Congrats | TaskQuest",
+            text: message
+        })
+
+        if (SendEmail) {
+            res.status(201).json({ message: 'User promoted successfully', user });
+        }
+        else {
+            console.log("Error sending email !!")
+            res.status(500).json({ message: "Internal Server Error" })
         }
     } catch (error) {
         res.status(500).json({ message: 'Internal server error occurred while approving the user', error });
@@ -153,11 +163,12 @@ router.get('/fetch-users', authMiddleware, async (req, res) => {
     try {
         // Find users role not equal to 'admin'
         const users = await User.find({
-            role: { $ne: "admin" }
+            role: { $ne: "admin" },
+            status: { $ne: "pending" }
         });
 
         const users_count = await User.countDocuments();
-        console.log(users_count);
+        // console.log(users_count);
         res.status(201).json({ message: 'Users fetched successfully !!', users: users, users_count: users_count });
     } catch (error) {
         res.status(500).json({ error: error.message });

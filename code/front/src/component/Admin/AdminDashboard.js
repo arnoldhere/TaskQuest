@@ -144,7 +144,6 @@ export default function AdminDashboard() {
       });
 
       if (res.status === 201) {
-        // Immediately update the local state after success
         toast.success('User disabled successfully');
       } else {
         toast.error(res.data.message);
@@ -156,31 +155,32 @@ export default function AdminDashboard() {
   };
 
 
-  const makeLeader = async (userId) => {
-    console.log(`Making leader user with ID: ${userId}`);
+  const toggleRole = async (userId) => {
+    console.log(`Toggling role for user with ID: ${userId}`);
     try {
-      const token = Cookies.get("auth-token")
-      // Send request to update user status to 'confirmed'
-      const res = await axios.put(`http://localhost:3333/admin/make-leader/${userId}`, {}, {
+      const token = Cookies.get("auth-token");
+      // Send request to update user role
+      const res = await axios.put(`http://localhost:3333/admin/toggleRole/${userId}`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       });
 
       if (res.status === 201) {
-        // Immediately update the local state after success
         // Update the local state with the modified user role
         setFetchedUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user._id === userId ? { ...user, role: 'leader' } : user
+            user._id === userId
+              ? { ...user, role: user.role === 'leader' ? 'member' : 'leader' }
+              : user
           )
         );
-        toast.success('User promoted successfully');
+        toast.success('User role updated successfully');
       } else {
         toast.error(res.data.message);
       }
     } catch (error) {
-      console.error('Error promoting user:', error);
+      console.error('Error toggling user role:', error);
       toast.error('Internal server error');
     }
   };
@@ -269,16 +269,26 @@ export default function AdminDashboard() {
                                 >
                                   Disable
                                 </Button>
-                                <Button
+                                {(user.role === "member") ? (<Button
                                   variant="contained"
-                                  color="success"
+                                  color="warning"
                                   size="small"
                                   startIcon={<CheckCircleOutlineIcon />}
-                                  onClick={() => makeLeader(user._id)}
+                                  onClick={() => toggleRole(user._id)}
                                   className="hover:bg-blue-600"
                                 >
                                   Make leader
-                                </Button>
+                                </Button>) : (
+                                  <Button
+                                    variant="contained"
+                                    color="success"
+                                    size="small"
+                                    startIcon={<CheckCircleOutlineIcon />}
+                                    onClick={() => toggleRole(user._id)}
+                                    className="hover:bg-blue-600"
+                                  >
+                                    Make member
+                                  </Button>)}
 
                               </div>
                             </TableCell>
