@@ -9,7 +9,7 @@ import { useAuth } from "../utils/AuthContext";
 import Cookies from 'js-cookie';
 import toast, { Toaster } from "react-hot-toast";
 import LeaderLanding from "./LeaderLanding";
-
+import LeaderProjects from "./Leader/LeaderProjects";
 function LeaderLayout() {
 	// const isLogin = localStorage.getItem('user');
 	// const [loading, setLoading] = useState(true);

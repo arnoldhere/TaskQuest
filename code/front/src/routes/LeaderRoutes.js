@@ -2,9 +2,11 @@ import React from "react";
 import ProtectedRoute from "../utils/ProtectedRoute";
 import LeaderLayout from "../component/LeaderLayout";
 import LeaderLogin from "../component/Leader/Login";
-import Team from "../component/Leader/Team";
+import CreateTeam from "../component/Leader/CreateTeam";
 import PageNotFound from "../component/PageNotfound";
 import LeaderDashboard from "../component/Leader/LeaderDashboard";
+import ProjectDetail from "../component/Leader/ProjectDetail";
+import TeamDetail from "../component/Leader/TeamDetail";
 
 const leaderRoutes = [
     {
@@ -30,7 +32,25 @@ const leaderRoutes = [
                 path: "team",
                 element: (
                     <ProtectedRoute>
-                        <Team />
+                        <CreateTeam />
+                    </ProtectedRoute>
+                ),
+                errorElement: <PageNotFound />,
+            },
+            {
+                path: "project-detail/:id",
+                element: (
+                    <ProtectedRoute>
+                        <ProjectDetail />
+                    </ProtectedRoute>
+                ),
+                errorElement: <PageNotFound />,
+            },
+            {
+                path: "team-detail/:id",
+                element: (
+                    <ProtectedRoute>
+                        <TeamDetail/>
                     </ProtectedRoute>
                 ),
                 errorElement: <PageNotFound />,

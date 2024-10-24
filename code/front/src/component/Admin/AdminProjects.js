@@ -269,7 +269,7 @@ export default function AdminProjects() {
                             </TableContainer>
                         </Grid>
                     ) : (
-                        <Typography variant="h6" sx={{ textAlign: 'center', width: '100%', mt: 4 }}>
+                        <Typography variant="h6" sx={{ textAlign: 'center', width: '100%', mt: 4 }} className='text-dark'>
                             No projects found. Please add a project.
                         </Typography>
                     )}
@@ -292,23 +292,6 @@ export default function AdminProjects() {
                             onChange={handleInputChange}
                             required
                         />
-                        <TextField
-                            select
-                            margin="dense"
-                            id="status"
-                            label="Project Status"
-                            fullWidth
-                            variant="outlined"
-                            name="status"
-                            value={inputValues.status}
-                            onChange={handleInputChange}
-                            required
-                        >
-                            <MenuItem value="Not Started">Not Started</MenuItem>
-                            <MenuItem value="In Progress">In Progress</MenuItem>
-                            <MenuItem value="Completed">Completed</MenuItem>
-                            <MenuItem value="Delayed">Delayed</MenuItem>
-                        </TextField>
                         <TextField
                             select
                             margin="dense"

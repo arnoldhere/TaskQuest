@@ -29,12 +29,13 @@ import {
     Container,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Assignment, Group, CheckCircle, Schedule, ErrorOutline, Add, Visibility } from '@mui/icons-material';
+import { Assignment, Group, CheckCircle, Schedule, ErrorOutline, Add, Visibility, Cookie } from '@mui/icons-material';
 import Cookies from "js-cookie";
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../Loader';
 import { styled } from '@mui/system';
+import { Link, useNavigate } from 'react-router-dom';
 
 const initialProjects = [];
 
@@ -64,6 +65,7 @@ export default function LeaderProjects() {
     const [loading, setLoading] = useState(true);
     const toastShownRef = useRef(false);
 
+    const navigate = useNavigate();
 
     const [scorecardData, setScorecardData] = useState([
         { title: 'Total Projects', value: 0 },
@@ -109,7 +111,7 @@ export default function LeaderProjects() {
         fetchProjects();
     }, []);
 
-    const [inputValues, setInputValues] = useState({ name: '', status: 'Not Started', description: '', leader: '' });
+    // const [inputValues, setInputValues] = useState({ name: '', status: 'Not Started', description: '', leader: '' });
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -119,39 +121,12 @@ export default function LeaderProjects() {
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
 
-    const handleOpenDetailsDialog = (project) => {
-        setSelectedProject(project);
-        setOpenDetailsDialog(true);
+    const handleOpenDetailsDialog = (_id) => {
+        // toast.loading("please wait...");
+        console.log(_id)
+        navigate(`/leader/project-detail/${_id}`);
     };
     const handleCloseDetailsDialog = () => setOpenDetailsDialog(false);
-
-    const handleAddProject = async () => {
-        if (!inputValues.name || !inputValues.status || !inputValues.description) {
-            toast.error("All fields are required.");
-            return;
-        }
-
-        try {
-            const user_email = Cookies.get('email');
-            const res = await axios.post("http://localhost:3333/admin/add-project", { data: inputValues, user: user_email }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                }
-            });
-
-            if (res.status === 201) {
-                toast.success(res.data.message);
-                handleCloseDialog();
-                setInputValues({ name: '', status: 'Not Started', description: '' });
-                setProjects([...projects, res.data.project]); // Add new project to the list
-            } else {
-                toast.error(res.data.message || "Error adding project.");
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            toast.error('Internal error occurred.');
-        }
-    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -188,8 +163,7 @@ export default function LeaderProjects() {
     }
 
     return (
-        <Container sx={{ mt: 4, mb: 4 }}>
-
+        <Container sx={{ mt: 4, mb: 1 }}>
             <Grid container spacing={3}>
                 {scorecardData.map((card, index) => (
                     <Grow in={true} key={index} timeout={500 * (index + 1)}>
@@ -229,7 +203,7 @@ export default function LeaderProjects() {
                                     <TableBody>
                                         {projects.map((project, index) => {
                                             if (!project) {
-                                                return null; // Skip rendering if the project is undefined or null
+                                                return <h3 className='text-center text-red-500'>No projects Assigned</h3>;
                                             }
 
                                             return (
@@ -249,9 +223,13 @@ export default function LeaderProjects() {
                                                     <TableCell>{project.description}</TableCell>
                                                     <TableCell>{project.leader}</TableCell>
                                                     <TableCell>
-                                                        <IconButton onClick={() => handleOpenDetailsDialog(project)}>
-                                                            <Visibility />
-                                                        </IconButton>
+                                                        {project._id ? (
+                                                            <IconButton onClick={() => handleOpenDetailsDialog(project._id)}>
+                                                                <span className="text-center text-sm"><Visibility /> View</span>
+                                                            </IconButton>
+                                                        ) : (
+                                                            <span>No ID available</span>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             );

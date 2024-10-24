@@ -6,21 +6,24 @@ import Cookies from "js-cookie";
 
 const ProtectedRoute = ({ children }) => {
 	const { isAuthenticated, login, logout } = useAuth();
-	const [loading, setLoading] = useState(true); // Add loading state to prevent premature redirection
+	const [loading, setLoading] = useState(true);
 	const authToken = Cookies.get("auth-token");
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (authToken && isAuthenticated) {
-			// If auth-token exists but isAuthenticated is false, assume user is logged in
-			login(); // Set isAuthenticated to true
-		} else if (!authToken) {
+		if (authToken) {
+			// If auth-token exists and isAuthenticated is false, assume user is logged in
+			if (!isAuthenticated) {
+				login(); // Set isAuthenticated to true
+			}
+		} else {
 			// If no auth-token, user is not authenticated
 			logout(); // Clear state and storage
 		}
 		setLoading(false); // Loading done
 	}, [authToken, isAuthenticated, login, logout]);
 
+	// While loading, show a spinner or similar
 	if (loading) {
 		return (
 			<div
@@ -34,14 +37,15 @@ const ProtectedRoute = ({ children }) => {
 		);
 	}
 
-
-	if (!authToken || !isAuthenticated) {
-		// If no token or not authenticated, redirect to login
+	// Redirect logic only after loading is complete
+	if (!isAuthenticated) {
+		// If not authenticated, redirect to login
 		toast.error("You must be logged in to access this page.");
-		navigate("/login")
+		navigate("/login"); // Make sure this path matches your routes
+		return null; // Return null to prevent rendering of children
 	}
 
-	return children;
+	return children; // Render children if authenticated
 };
 
 export default ProtectedRoute;

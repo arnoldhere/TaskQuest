@@ -12,6 +12,7 @@ import {
     useMediaQuery,
     Box,
 } from '@mui/material';
+import LeaderProjects from '../Leader/LeaderProjects';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import {
     Menu as MenuIcon,

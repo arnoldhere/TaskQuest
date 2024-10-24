@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt"); // for  password hashing
 const createToken = require("../utils/Token");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const authMiddleware = require("../middlewares/auth")
 
 
 /************ LOGIN & AUTHENTICATE user *************/
