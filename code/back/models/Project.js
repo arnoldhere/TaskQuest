@@ -12,6 +12,7 @@ const projectSchema = new mongoose.Schema({
     //     },
     // ],
     teams: Array,
+    deadline: Date,
     createdAt: { type: Date, default: Date.now },
 });
 

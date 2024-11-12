@@ -182,8 +182,9 @@ router.get("/fetch-projects", async (req, res) => {
     const projects = await Project.find();
     const users = await User.find(
         { status: 'confirmed', role: 'leader' }, // Filter conditions
-        { email: 1, _id: 0 } // Projection: Include only email, exclude _id
+        // { email: 1, _id: 0 } // Projection: Include only email, exclude _id
     );
+    console.log(users)
 
     const projects_count = await Project.countDocuments();
     res.status(201).json({ message: 'Projects fetched successfully !!', projects: projects, projects_count: projects_count, users: users });
@@ -206,6 +207,7 @@ router.post('/add-project', async (req, res) => {
             status: data.status,
             description: data.description,
             leader: user,
+            deadline: data.deadline
         })
 
         const saved = await project.save();
@@ -224,8 +226,6 @@ router.post('/add-project', async (req, res) => {
                 subject: 'Attention here | TaskQuest',
                 text: `Dear sir/madam . \n You've assigned a new project login to system to get more details. \n from TaskQuest.`
             });
-
-
 
             return res.status(201).json({ message: "Project saved successfully" })
         } else {

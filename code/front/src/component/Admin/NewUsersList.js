@@ -74,6 +74,9 @@ export default function NewUsersList() {
             if (res.status === 201) {
                 // Immediately update the local state after success
                 setPendingUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
+                setTimeout(() => {
+                    toast.success('Please wait...');
+                }, 3500);
                 toast.success('User approved successfully');
             } else {
                 toast.error(res.data.message);

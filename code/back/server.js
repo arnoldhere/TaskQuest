@@ -7,7 +7,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const Auth = require("./routes/auth")
-const Task = require("./routes/task")
 const member = require("./routes/member")
 const Admin = require("./routes/admin");
 const Leader = require("./routes/leader");
@@ -36,7 +35,6 @@ app.use(cors({
 
 // routes configuration
 app.use('/auth', Auth);
-app.use('/task', Task);
 app.use('/admin', Admin);
 app.use('/leader', Leader);
 app.use('/member', member);

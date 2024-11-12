@@ -82,7 +82,7 @@ export default function AdminDashboard() {
           setScorecardData([
             { title: 'Total Users', value: res.data.users_count },
             // { title: 'Active Users', value: res.data. },
-            { title: 'Active Users', value: 5 },
+            // { title: 'Active Users', value: 5 },
           ]);
 
           if (!toastShownRef.current) {
