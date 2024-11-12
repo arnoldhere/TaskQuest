@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project")
-const nodemailer = require('nodemailer');
 const authMiddleware = require("../middlewares/auth");
 const Team = require("../models/Team");
 const User = require("../models/User");
+const nodemailer = require('nodemailer');
 
 
 router.get("/fetch-projects/:email", authMiddleware, async (req, res) => {
@@ -25,7 +25,7 @@ router.post("/add-teamname", authMiddleware, async (req, res) => {
         const team = new Team({
             leader: email,
             name: teamName,
-            members: [email]
+            members: [{ email: email }] // Wrap the email in an object with an 'email' field
         })
         await team.save();
 
@@ -112,8 +112,12 @@ router.post("/add-member", authMiddleware, async (req, res) => {
 
     try {
 
-        const add = await Team.findByIdAndUpdate(tid, { $push: { members: member } }, { new: true });
-
+        // Update the team by pushing the member as an object with an email field
+        const add = await Team.findByIdAndUpdate(
+            tid,
+            { $push: { members: { email: member } } }, // Ensure member is added as an object with an email key
+            { new: true }
+        );
         const team = await Team.findById(tid);
 
 

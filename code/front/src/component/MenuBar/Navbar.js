@@ -25,8 +25,8 @@ export default function Navbar() {
 
   const menus = [
     { name: 'Dashboard', href: '/home', current: true },
-    { name: 'Team', href: '/team', current: false },
-    { name: 'Projects', href: '/projects', current: false },
+    { name: 'Teams', href: '/teams', current: false },
+    // { name: 'Projects', href: '/projects', current: false },
     { name: 'Calendar', href: '/calendar', current: false },
   ];
 

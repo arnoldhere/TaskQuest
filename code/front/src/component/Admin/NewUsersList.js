@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from "react-router-dom"
 import axios from 'axios';
 import {
     Table,
@@ -13,6 +14,7 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Loader from '../Loader';
+
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 
@@ -20,6 +22,7 @@ export default function NewUsersList() {
     const [pendingUsers, setPendingUsers] = useState([]); // State to hold pending users
     const [loading, setLoading] = useState(true); // State to show/hide loade
     const toastShownRef = useRef(false);
+    const navigate = useNavigate()
 
     // Fetch pending users on component mount
     useEffect(() => {
@@ -81,6 +84,55 @@ export default function NewUsersList() {
         }
     };
 
+    const viewUser = async (userId) => {
+        try {
+            const token = Cookies.get("auth-token");
+
+            // Send request to get the resume URL
+            const res = await axios.post(`http://localhost:3333/admin/view-resume/${userId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
+            });
+
+            if (res.status === 200) {
+                // Open the resume URL in a new tab
+                const fileUrl = res.data.fileUrl;
+                window.open(fileUrl, "_blank"); // Open the PDF in a new tab
+            } else {
+                toast.error(res.data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            toast.error('Internal server error..');
+        }
+    };
+
+    const deleteUser = async (userId) => {
+        try {
+            const token = Cookies.get("auth-token");
+            console.log("Token:", token);  // Log the token to verify
+
+            // Send request to get the resume URL
+            const res = await axios.get(`http://localhost:3333/admin/del-user/${userId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,  // Ensure this header is correct
+                }
+            });
+
+            if (res.status === 201) {
+                toast.success("Deleted successfully")
+                navigate("/admin/new-users")
+            } else {
+                toast.error(res.data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            toast.error('Internal server error..');
+        }
+    }
+
+
     // Show loader while fetching data
     if (loading) {
         return <Loader />; // Display loader while fetching users
@@ -98,7 +150,6 @@ export default function NewUsersList() {
                             <TableCell className="font-semibold">Name</TableCell>
                             <TableCell className="font-semibold">Email</TableCell>
                             <TableCell className="font-semibold">Status</TableCell>
-                            <TableCell className="font-semibold">Registration Date</TableCell>
                             <TableCell className="font-semibold">Actions</TableCell>
                         </TableRow>
                     </TableHead>
@@ -107,10 +158,9 @@ export default function NewUsersList() {
                             pendingUsers.map((user, index) => (
                                 <TableRow key={user._id} className="hover:bg-gray-50"> {/* Add key prop */}
                                     <TableCell>{index + 1}</TableCell> {/* Serial number */}
-                                    <TableCell>{user.firstname}</TableCell> {/* Display user name */}
+                                    <TableCell>{user.firstname} {user.lastname}</TableCell> {/* Display user name */}
                                     <TableCell>{user.email}</TableCell> {/* Display user email */}
                                     <TableCell>{user.status}</TableCell> {/* Display user status */}
-                                    <TableCell>{user.joined}</TableCell> {/* Display registration date */}
                                     <TableCell>
                                         <div className="flex space-x-2">
                                             <Button
@@ -122,6 +172,25 @@ export default function NewUsersList() {
                                                 className="hover:bg-blue-600"
                                             >
                                                 Approve
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                color="warning"
+                                                size="small"
+                                                onClick={() => viewUser(user._id)}
+                                                className="hover:bg-blue-600"
+                                            >
+                                                RESUME
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                color="info"
+                                                size="small"
+                                                startIcon={<CancelIcon />}
+                                                onClick={() => deleteUser(user._id)}
+                                                className="hover:bg-blue-600"
+                                            >
+                                                REJECT
                                             </Button>
                                         </div>
                                     </TableCell>

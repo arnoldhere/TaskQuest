@@ -2,11 +2,15 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const CryptoJS = require("crypto-js");
-const bcrypt = require("bcrypt"); // for  password hashing
+const bcrypt = require("bcryptjs"); // for  password hashing
 const createToken = require("../utils/Token");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const storage = require("../utils/storage");
 
+// Middleware to handle file uploads
+const upload = multer({ storage });
 
 /************ LOGIN & AUTHENTICATE user *************/
 router.post("/login-member", async (req, res) => {
@@ -311,57 +315,49 @@ router.post('/updatePassword', async (req, res) => {
 
 /************ REGISTER user *************/
 
-router.post("/register", async (req, res) => {
+router.post("/register", upload.single("resume"), async (req, res) => {
     try {
-        const fetched_data = req.body.data;
+        const { data } = req.body;
+        const file = req.file; // The uploaded file data
 
         // Decrypt the data
-        const decrypted_data = CryptoJS.DES.decrypt(fetched_data, "signupData");
-        const user_data = JSON.parse(decrypted_data.toString(CryptoJS.enc.Utf8));
+        const decryptedData = CryptoJS.DES.decrypt(data, "signupData");
+        const userData = JSON.parse(decryptedData.toString(CryptoJS.enc.Utf8));
 
-        console.log("Decrypted Data: ", user_data);
+        console.log("Decrypted Data: ", userData);
 
-        // Validate the decrypted data
-        if (
-            !user_data.email ||
-            !user_data.firstname ||
-            !user_data.lastname ||
-            !user_data.password
-        ) {
-            return res.status(400).json({ message: "Empty data received!" });
+        // Check required fields
+        if (!userData.email || !userData.firstname || !userData.lastname || !userData.password) {
+            return res.json({ message: "Required fields are missing" });
         }
 
-        // Check if the email is already taken
-        const userExist = await User.findOne({ email: user_data.email });
-        console.log("Existing User: ", userExist);
 
-        if (userExist) {
-            return res.status(400).json({
-                status: false,
-                message: "Email already taken!",
-            });
-        } else {
-            const hashed_pwd = await bcrypt.hash(user_data.password, 10);
-
-            const user = await new User({
-                firstname: user_data.firstname,
-                lastname: user_data.lastname,
-                email: user_data.email,
-                password: hashed_pwd,
-                role: user_data.role
-            });
-            console.log(user);
-            const saved = await user.save(); // store the user record in the db
-
-            if (saved)
-                return res
-                    .status(201)
-                    .json({ message: "User registered successfully !!", user_status: user.status });
-            else
-                return res
-                    .status(400)
-                    .json({ message: "Error saving user! Try again later.." });
+        // Check if email already exists
+        const userExists = await User.findOne({ email: userData.email });
+        if (userExists) {
+            return res.json({ message: "Email already taken!" });
         }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+        // Create and save the user record with resume information
+        const newUser = new User({
+            firstname: userData.firstname,
+            lastname: userData.lastname,
+            email: userData.email,
+            password: hashedPassword,
+            role: userData.role,
+            resumePath: file.path, // Save file path to database
+        });
+
+        const savedUser = await newUser.save();
+
+        return res.status(201).json({
+            message: "User registered successfully!",
+            user_status: savedUser.status,
+        });
+
     } catch (error) {
         console.error("Error occurred: ", error);
         return res

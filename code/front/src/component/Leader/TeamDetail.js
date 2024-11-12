@@ -166,8 +166,8 @@ export default function TeamDetail() {
                 toast.success(res.data.message);
                 toastShownRef.current = true;
             }
-            // navigate('leader/team')
-            // <Link to={"/leader/team"} />
+            navigate('/leader/team')
+            // <Link to={} />
         } else {
             if (!toastShownRef.current) {
                 toast.error(res.data.message);
@@ -268,7 +268,7 @@ export default function TeamDetail() {
                                     <Grid item xs={12} sm={6} key={index + 1}>
                                         <Box display="flex" alignItems="center">
                                             <Box>
-                                                <Typography variant="subtitle1"> {index + 1 + ") "} {member}</Typography>
+                                                <Typography variant="subtitle1"> {index + 1 + ") "} {member.email}</Typography>
                                             </Box>
                                         </Box>
                                     </Grid>

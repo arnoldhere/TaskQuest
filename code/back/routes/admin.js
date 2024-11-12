@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 const User = require("../models/User");
 const CryptoJS = require("crypto-js");
 const nodemailer = require("nodemailer");
@@ -238,6 +240,56 @@ router.post('/add-project', authMiddleware, async (req, res) => {
     }
 });
 
+router.post('/view-resume/:id', authMiddleware, async (req, res) => {
+    try {
+
+        const userId = req.params.id
+        const user = await User.findById(userId);
+        console.log(user)
+        if (!user || !user.resumePath) {
+            return res.json({ message: "Resume not found" });
+        }
+
+        // Resolve the file path
+        const filePath = path.resolve(user.resumePath);
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            return res.json({ message: "File not found on server" });
+        }
+
+        // Set content type and send file as response
+        // res.setHeader("Content-Type", "application/pdf");
+        // res.sendFile(filePath);
+
+        // Return the URL of the file (relative to public/static folder)
+        const fileUrl = `http://localhost:3333/uploads/${path.basename(filePath)}`;
+        res.status(200).json({ fileUrl });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+
+})
+
+router.get('/del-user/:id', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // Attempt to delete the user
+        const deleteUser = await User.deleteOne({ _id: userId });
+
+        if (deleteUser) {
+            return res.status(201).json({ message: 'User deleted successfully' });
+        } else {
+            return res.json({ message: 'User not found' });
+        }
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
 module.exports = router;

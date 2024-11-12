@@ -17,9 +17,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import CryptoJS from 'crypto-js';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import Select from "@mui/joy/Select"
-import Option from '@mui/joy/Option';
-
 
 
 const SignupForm = () => {
@@ -34,6 +31,7 @@ const SignupForm = () => {
     });
 
     const [errors, setErrors] = useState({});
+    const [file, setFile] = useState(null);
 
     const validate = () => {
         const errors = {};
@@ -70,6 +68,9 @@ const SignupForm = () => {
             errors.rePassword = "Passwords do not match";
         }
 
+        if (!file) {
+            errors.file = "Please upload the resume..";
+        }
 
         return errors;
     };
@@ -78,6 +79,12 @@ const SignupForm = () => {
         const { name, value } = event.target || event;
         setInputValues({ ...inputValues, [name]: value });
     };
+
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -90,15 +97,19 @@ const SignupForm = () => {
             // Proceed with form submission logic
             try {
                 inputValues.role = "member";
-                // encrypt your data
-                const finalData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'signupData').toString();
-                console.log(finalData);
 
-                const token = Cookies.get("auth-token");
+                // Encrypt input data
+                const encryptedData = CryptoJS.DES.encrypt(JSON.stringify(inputValues), 'signupData').toString();
 
-                // send the data to backend through axios api 
-                const res = await axios.post("http://localhost:3333/auth/register", {
-                    data: finalData
+                // Prepare FormData for file upload
+                const formData = new FormData();
+                formData.append("resume", file);
+                formData.append("data", encryptedData);
+                // Send data to backend
+                const res = await axios.post("http://localhost:3333/auth/register", formData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
                 });
                 // Handle response based on status
                 if (res.status === 201) {
@@ -115,7 +126,7 @@ const SignupForm = () => {
 
             } catch (error) {
                 console.log(error.message)
-                toast.error("Registration interrupted !! \n Email is already in use ");
+                toast.error("Registration interrupted !! \n Select only pdf files ");
             }
 
         }
@@ -343,37 +354,33 @@ const SignupForm = () => {
                                             </Typography>
                                         )}
                                     </FormControl>
-                                    {/* <FormControl error={Boolean(errors.role)}>
-                                        <FormLabel>Role</FormLabel>
-                                        <Select
-                                            color="neutral"
-                                            placeholder="Choose one…"
-                                            variant="soft"
-                                            name="role"
-                                            value={inputValues.role}
-                                            onChange={(event, newValue) => handleRoleInputChange(event, newValue)}  // Pass the value
+                                    <FormControl error={Boolean(errors.lastname)}>
+                                        <FormLabel>Upload Resume</FormLabel>
+                                        <Input
+                                            type="file"
+                                            accept=".pdf"
+                                            name="resume"
+                                            required
+                                            value={inputValues.resume}
+                                            onChange={handleFileChange}
                                             sx={{
                                                 transition: "all 0.3s ease",
-                                                borderColor: errors.role ? 'error.main' : '',
+                                                borderColor: errors.resume ? 'error.main' : '',
                                                 "&:focus": {
-                                                    borderColor: errors.role ? 'error.main' : 'success.main',
-                                                    boxShadow: errors.role ? '0 0 8px 0 rgba(255, 0, 0, 0.5)' : '0 0 8px 0 rgba(0, 128, 0, 0.5)',
+                                                    borderColor: errors.resume ? 'error.main' : 'success.main',
+                                                    boxShadow: errors.resume ? '0 0 8px 0 rgba(255, 0, 0, 0.5)' : '0 0 8px 0 rgba(0, 128, 0, 0.5)',
                                                 },
                                                 "&:hover": {
-                                                    borderColor: errors.role ? 'error.main' : 'primary.main',
+                                                    borderColor: errors.resume ? 'error.main' : 'primary.main',
                                                 },
                                             }}
-                                        >
-                                            <Option value="leader">Team Leader</Option>
-                                            <Option value="member">Team Member</Option>
-                                        </Select>
-                                        {errors.role && (
+                                        />
+                                        {errors.resume && (
                                             <Typography color="error" variant="caption">
-                                                {errors.role}
+                                                {errors.resume}
                                             </Typography>
                                         )}
-                                    </FormControl> */}
-
+                                    </FormControl>
                                     <Stack gap={4} sx={{ mt: 2 }}>
                                         <Box
                                             sx={{

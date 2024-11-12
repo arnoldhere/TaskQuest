@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
     role: { type: String, default: "member" },
     status: { type: String, default: "pending" },
     joined: { type: Date, default: Date.now() },
+    resumePath: String, 
     Avatar: Buffer,
     OtpToken: {
         type: String,

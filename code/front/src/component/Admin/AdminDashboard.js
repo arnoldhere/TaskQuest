@@ -207,7 +207,7 @@ export default function AdminDashboard() {
             </Grow>
           ))}
         </Grid2>
-
+        <hr />
         <Grid2 spacing={3} sx={{ mt: 4, width: '100%' }}>
           <Grid2 item xs={12}>
             <Paper sx={{ p: 2 }}>

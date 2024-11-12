@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require("express");
+const path = require("path");
 const app = express();
 const port = process.env.PORT;
 const cors = require('cors');
@@ -7,6 +8,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const Auth = require("./routes/auth")
 const Task = require("./routes/task")
+const member = require("./routes/member")
 const Admin = require("./routes/admin");
 const Leader = require("./routes/leader");
 const User = require('./models/User');
@@ -37,6 +39,14 @@ app.use('/auth', Auth);
 app.use('/task', Task);
 app.use('/admin', Admin);
 app.use('/leader', Leader);
+app.use('/member', member);
+
+//Folder stores the file uploads
+// app.use("/uploads", express.static("uploads"));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+
 
 app.use('/logout', async (req, res) => {
     const { email } = req.body;
