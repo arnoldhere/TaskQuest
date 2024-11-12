@@ -1,180 +1,118 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { useNavigate, useParams } from 'react-router-dom'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Avatar,
-  Chip,
-  Box,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material'
-import { ExpandMore, ExpandLess } from '@mui/icons-material'
-import toast, { Toaster } from 'react-hot-toast'
-import Cookies from 'js-cookie';
-import axios from 'axios'
-
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate, useParams } from "react-router-dom"
+import { ChevronDown, ChevronUp, Calendar, CheckCircle2 } from 'lucide-react'
+import toast, { Toaster } from "react-hot-toast";
+import Cookies from "js-cookie";
+import axios from "axios";
+import FormatDate from '../../utils/FormatDate';
 
 export default function ProjectDetail() {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [projectData, setProjectData] = useState({})
   const { id } = useParams(); // Extract project ID from the URL
-  console.log(id);
   const navigate = useNavigate();
   const toastShownRef = useRef(false);
-
-  const [projectData, setProjectData] = useState({
-    name: '',
-    description: '',
-    status: '',
-    createdAt: '',
-    endDate: '',
-    leader: '',
-    members: [],
-    // technologies: [],
-  });
 
   useEffect(() => {
     const FetchProject = async () => {
       try {
-        // setLoading(true);
         const token = Cookies.get("auth-token");
-        console.log(id)
         const res = await axios.get(`http://localhost:3333/leader/fetch-project-detail/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
+
         if (res.status === 201) {
           if (!toastShownRef.current) {
             toast.success(res.data.message);
             toastShownRef.current = true;
           }
+
           const project = res.data.project;
-          setProjectData(project);
-        } else {
-          if (!toastShownRef.current) {
-            toast.error(res.data.message);
-            toastShownRef.current = true;
+
+          // Calculate project progress based on tasks
+          if (project.tasks && project.tasks.length > 0) {
+            const completedTasks = project.tasks.filter(task => task.status === "completed").length;
+            const progress = (completedTasks / project.tasks.length) * 100;
+            setProjectData({ ...project, progress });
+          } else {
+            setProjectData({ ...project, progress: 0 });
           }
+
+        } else {
+          toast.error(res.data.message);
         }
       } catch (error) {
         console.error('Error fetching project details:', error);
-        toast.error('An error occurred while fetching project detail.');
-      } finally {
-        // setLoading(false);
+        toast.error('An error occurred while fetching project details.');
       }
     };
 
     FetchProject();
   }, [id]);
 
-  const [expanded, setExpanded] = useState(false)
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-
-  const toggleExpand = () => {
-    setExpanded(!expanded)
-  }
-
-  const cardVariants = {
-    collapsed: { height: isMobile ? '200px' : '250px' },
-    expanded: { height: 'auto' },
-  }
-
-  const contentVariants = {
-    collapsed: { opacity: 0, y: -20 },
-    expanded: { opacity: 1, y: 0 },
-  }
-
   return (
-    <>
-      <motion.div
-        initial="collapsed"
-        animate={expanded ? 'expanded' : 'collapsed'}
-        variants={cardVariants}
-        transition={{ duration: 0.3 }}
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <h2 className="text-3xl font-bold mb-4 text-gray-800">{projectData.name}</h2>
+      <p className="text-gray-600 mb-4">{projectData.description}</p>
+      <div className="flex flex-wrap justify-between items-center mb-6">
+        <div className="flex items-center space-x-4 mb-2 sm:mb-0">
+          <Calendar className="text-blue-500 h-6 w-6" />
+          <span className="text-sm text-gray-600">
+            Deadline: {projectData.deadline ? FormatDate(projectData.deadline) : "No deadline"}
+          </span>
+        </div>
+        <div className="w-full sm:w-auto">
+          <div className="bg-gray-200 rounded-full h-4 w-full sm:w-64">
+            <div
+              className="bg-blue-500 rounded-full h-4"
+              style={{ width: `${projectData.progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-gray-600 mt-1 text-center">{projectData.progress}% Complete</p>
+        </div>
+      </div>
+
+      <button
+        className="flex items-center justify-between w-full py-2 px-4 bg-gray-100 rounded-lg text-left"
+        onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Card sx={{ overflow: 'hidden', position: 'relative', width: '100%', maxWidth: 800, margin: 'auto', marginTop: '10rem' }}>
-          <CardContent>
-            <Typography variant="h4" gutterBottom>
-              {projectData.name}
-            </Typography>
-            <Typography variant="body1" paragraph>
-              {projectData.description}
-            </Typography>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">Status: {projectData.status}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">
-                  Duration: {projectData.createdAt} - {projectData.endDate}
-                </Typography>
-              </Grid>
-            </Grid>
-            <Box mt={2}>
-              {/* {projectData.technologies.map((tech) => (
-              <Chip key={tech} label={tech} sx={{ mr: 1, mb: 1 }} />
-            ))} */}
-              <Typography variant="subtitle1">
-                Project Leader Contact: <hr />{projectData.leader}
-              </Typography>
-            </Box>
-          </CardContent>
+        <span className="font-semibold text-gray-800">Task Timeline</span>
+        {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+      </button>
 
-          <motion.div
-            variants={contentVariants}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.ul
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            style={{ display: expanded ? 'block' : 'none' }}
+            className="mt-4 space-y-4"
           >
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Team Members
-              </Typography>
-              <Grid container spacing={2}>
-                {projectData.members && projectData.members.map((member, index) => (
-                  <Grid item xs={12} sm={6} key={index + 1}>
-                    <Box display="flex" alignItems="center">
-                      <Box>
-                        <Typography variant="subtitle1">{member.email}</Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </motion.div>
-
-          <IconButton
-            onClick={toggleExpand}
-            sx={{
-              position: 'absolute',
-              bottom: 8,
-              right: 8,
-              backgroundColor: 'background.paper',
-              borderRadius: 0,
-              marginTop: '20px',
-            }}
-          >
-            {expanded ?
-              (<>
-                <ExpandLess />
-                <span className='text-xs text-red-800'>See less</span>
-              </>
-              )
-              : (
-                <>
-                  <ExpandMore />
-                  <span className='text-xs text-red-800'>See more</span>
-                </>
-              )}
-          </IconButton>
-        </Card>
-      </motion.div>
+            {/* {projectData.tasks && projectData.tasks.length > 0 ? (
+              projectData.tasks.map((task, index) => (
+                <li key={task.id} className="flex items-start space-x-4">
+                  <div
+                    className={`flex-shrink-0 w-4 h-4 rounded-full mt-2 ${task.status === 'completed' ? 'bg-green-500' : task.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-300'}`}
+                  />
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-800">{task.name}</h3>
+                      <span className="text-sm text-gray-600">{task.date}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 capitalize">{task.status.replace('-', ' ')}</p>
+                  </div>
+                  {task.status === 'completed' && <CheckCircle2 className="text-green-500 h-6 w-6 flex-shrink-0" />}
+                </li>
+              ))
+            ) : (
+              <p className="text-gray-600 text-center">No tasks performed</p>
+            )} */}
+          </motion.ul>
+        )}
+      </AnimatePresence>
       <Toaster />
-    </>
-  )
+    </div>
+  );
 }

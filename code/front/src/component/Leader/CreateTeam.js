@@ -71,6 +71,7 @@ export default function CreateTeam() {
 
         if (teamName.length < 3) {
             toast.error("Enter valid team name");
+            return;
         }
         setIsLoading(true);
         try {

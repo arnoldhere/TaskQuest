@@ -25,8 +25,18 @@ function LeaderLayout() {
 
 	useEffect(() => {
 		const authToken = Cookies.get('auth-token');
-		if (isAuthenticated && authToken) {
-			navigate('/leader/dashboard');
+		if (!isAuthenticated && !authToken) {
+			navigate('/login');
+		}
+		if (localStorage.getItem("role") === "admin") {
+			navigate("/admin/dashboard")
+		}
+		
+		if (localStorage.getItem("role") === "leader") {
+			navigate("/leader/dashboard")
+		}
+		if (localStorage.getItem("role") === "member") {
+			navigate("/home")
 		}
 	}, [isAuthenticated, navigate]);
 

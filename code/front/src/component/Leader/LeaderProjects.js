@@ -1,24 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {useTheme} from '@mui/material';
 import {
     Box,
     Card,
     CardContent,
     Typography,
     Grid,
-    List,
-    ListItem,
-    ListItemText,
-    Chip,
-    useTheme,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    MenuItem,
-    IconButton,
-    Grow,
     Table,
     TableBody,
     TableCell,
@@ -27,20 +14,26 @@ import {
     TableRow,
     Paper,
     Container,
+    TablePagination,
+    TextField,
+    InputAdornment,
+    IconButton,
+    Chip,
+    Grow,
+    Button
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Assignment, Group, CheckCircle, Schedule, ErrorOutline, Add, Visibility, Cookie } from '@mui/icons-material';
+import { Assignment, CheckCircle, Schedule, ErrorOutline, Visibility, Search } from '@mui/icons-material';
 import Cookies from "js-cookie";
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../Loader';
 import { styled } from '@mui/system';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const initialProjects = [];
 
 const MotionCard = motion(Card);
-
 const StyledCard = styled(Card)(({ theme }) => ({
     height: '100%',
     display: 'flex',
@@ -48,20 +41,21 @@ const StyledCard = styled(Card)(({ theme }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing(2),
-    boxShadow: (theme.shadows && theme.shadows[3]) ? theme.shadows[3] : '0px 4px 20px rgba(0, 0, 0, 0.2)', // Fallback for undefined shadow
+    boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.2)', // Fallback for undefined shadow
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
     '&:hover': {
         transform: 'scale(1.05)',
-        boxShadow: (theme.shadows && theme.shadows[8]) ? theme.shadows[8] : '0px 8px 30px rgba(0, 0, 0, 0.3)', // Fallback for undefined shadow
+        boxShadow:  '0px 8px 30px rgba(0, 0, 0, 0.3)', // Fallback for undefined shadow
     },
 }));
 
 export default function LeaderProjects() {
     const theme = useTheme();
     const [projects, setProjects] = useState(initialProjects);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null);
-    const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredProjects, setFilteredProjects] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
     const [loading, setLoading] = useState(true);
     const toastShownRef = useRef(false);
 
@@ -72,13 +66,12 @@ export default function LeaderProjects() {
     ]);
 
     const token = Cookies.get("auth-token");
+
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-
                 const user_email = Cookies.get('email');
                 setLoading(true);
-                console.log(user_email)
                 const res = await axios.get(`http://localhost:3333/leader/fetch-projects/${user_email}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -87,7 +80,7 @@ export default function LeaderProjects() {
                 if (res.status === 201) {
                     setProjects(res.data.projects);
                     setScorecardData([
-                        { title: 'Total Projects', value: res.data.projects_count },
+                        { title: 'Assigned Projects', value: res.data.projects_count },
                     ]);
 
                     if (!toastShownRef.current) {
@@ -111,22 +104,29 @@ export default function LeaderProjects() {
         fetchProjects();
     }, []);
 
-    // const [inputValues, setInputValues] = useState({ name: '', status: 'Not Started', description: '', leader: '' });
+    useEffect(() => {
+        const filtered = projects.filter(project =>
+            project.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredProjects(filtered);
+    }, [searchQuery, projects]);
 
-    const handleInputChange = (event) => {
-        const { name, value } = event.target;
-        setInputValues({ ...inputValues, [name]: value });
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
     };
 
-    const handleOpenDialog = () => setOpenDialog(true);
-    const handleCloseDialog = () => setOpenDialog(false);
+    const handlePageChange = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
 
     const handleOpenDetailsDialog = (_id) => {
-        // toast.loading("please wait...");
-        console.log(_id)
         navigate(`/leader/project-detail/${_id}`);
     };
-    const handleCloseDetailsDialog = () => setOpenDetailsDialog(false);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -184,10 +184,24 @@ export default function LeaderProjects() {
             </Grid>
 
             <Box sx={{ flexGrow: 1, p: 3, backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
-
+                <TextField
+                    label="Search Projects"
+                    variant="outlined"
+                    fullWidth
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <Search />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{ mb: 3 }}
+                />
 
                 <Grid container spacing={3}>
-                    {projects.length > 0 ? (
+                    {filteredProjects.length > 0 ? (
                         <Grid item xs={12}>
                             <TableContainer component={Paper}>
                                 <Table>
@@ -201,78 +215,51 @@ export default function LeaderProjects() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {projects.map((project, index) => {
-                                            if (!project) {
-                                                return <h3 className='text-center text-red-500'>No projects Assigned</h3>;
-                                            }
-
-                                            return (
-                                                <TableRow key={index}>
-                                                    <TableCell>{project.name}</TableCell>
-                                                    <TableCell>
-                                                        <Chip
-                                                            icon={getStatusIcon(project.status)}
-                                                            label={project.status}
-                                                            size="small"
-                                                            sx={{
-                                                                backgroundColor: getStatusColor(project.status),
-                                                                color: theme.palette.getContrastText(getStatusColor(project.status)),
-                                                            }}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>{project.description}</TableCell>
-                                                    <TableCell>{project.leader}</TableCell>
-                                                    <TableCell>
-                                                        {project._id ? (
-                                                            <IconButton onClick={() => handleOpenDetailsDialog(project._id)}>
-                                                                <span className="text-center text-sm"><Visibility /> View</span>
-                                                            </IconButton>
-                                                        ) : (
-                                                            <span>No ID available</span>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
+                                        {filteredProjects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((project, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{project.name}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        icon={getStatusIcon(project.status)}
+                                                        label={project.status}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: getStatusColor(project.status),
+                                                            color: theme.palette.getContrastText(getStatusColor(project.status)),
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>{project.description}</TableCell>
+                                                <TableCell>{project.leader}</TableCell>
+                                                <TableCell>
+                                                    <IconButton onClick={() => handleOpenDetailsDialog(project._id)}>
+                                                    
+                                                    <Button className='btn btn-md btn-warning bg-warning text-white px-4 py-1'>
+                                                        VIEW
+                                                    </Button>
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
-
                                 </Table>
+                                <TablePagination
+                                    rowsPerPageOptions={[5, 10, 25]}
+                                    component="div"
+                                    count={filteredProjects.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handlePageChange}
+                                    onRowsPerPageChange={handleRowsPerPageChange}
+                                />
                             </TableContainer>
                         </Grid>
                     ) : (
                         <Typography variant="h6" sx={{ textAlign: 'center', width: '100%', mt: 4 }}>
-                            No projects found. Please add a project.
+                            No projects found.
                         </Typography>
                     )}
                 </Grid>
-
-
-
-                {/* Project Details Dialog */}
-                <Dialog open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
-                    <DialogTitle>{selectedProject?.name}</DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body1" gutterBottom>
-                            Status:
-                            <Chip
-                                icon={getStatusIcon(selectedProject?.status)}
-                                label={selectedProject?.status}
-                                size="small"
-                                sx={{
-                                    ml: 1,
-                                    backgroundColor: getStatusColor(selectedProject?.status),
-                                    color: theme.palette.getContrastText(getStatusColor(selectedProject?.status)),
-                                }}
-                            />
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                            Description: {selectedProject?.description}
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDetailsDialog}>Close</Button>
-                    </DialogActions>
-                </Dialog>
             </Box>
         </Container>
     );

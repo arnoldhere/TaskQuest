@@ -152,6 +152,7 @@ export default function TeamDetail() {
         event.preventDefault();
         if (!inputValues) {
             toast.error("Add a member !!");
+            return;
         }
 
         const token = Cookies.get("auth-token");

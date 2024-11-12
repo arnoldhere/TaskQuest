@@ -23,9 +23,9 @@ import {
 	Menu as MenuIcon,
 	Dashboard as DashboardIcon,
 	Person as PersonIcon,
-	Settings as SettingsIcon,
 	ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
+import HandymanIcon from '@mui/icons-material/Handyman';
 import TaskIcon from '@mui/icons-material/Task';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -36,7 +36,7 @@ const navItems = [
 	{ text: 'Dashboard', icon: <DashboardIcon />, to: '/admin/dashboard' },
 	{ text: 'Pending Users', icon: <PersonIcon />, to: '/admin/new-users' },
 	{ text: 'Projects', icon: <TaskIcon />, to: '/admin/projects' },
-	{ text: 'Settings', icon: <SettingsIcon />, to: '/admin/settings' },
+	{ text: 'Tools & Techs', icon: <HandymanIcon />, to: '/admin/tools' },
 ];
 
 // Create a dark theme
@@ -81,6 +81,16 @@ function AdminLayout() {
 		if (!isAuthenticated && !authToken) {
 			// navigate('/admin/dashboard');
 			navigate('/login');
+		}
+		if (localStorage.getItem("role") === "admin") {
+			navigate("/admin/dashboard")
+		}
+		
+		if (localStorage.getItem("role") === "leader") {
+			navigate("/leader/dashboard")
+		}
+		if (localStorage.getItem("role") === "member") {
+			navigate("/home")
 		}
 	}, [isAuthenticated, navigate]);
 
