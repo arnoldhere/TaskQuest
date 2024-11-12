@@ -9,7 +9,7 @@ const Project = require("../models/Project");
 const authMiddleware = require("../middlewares/auth")
 
 
-router.get('/fetch-newusers', authMiddleware, async (req, res) => {
+router.get('/fetch-newusers', async (req, res) => {
 
     try {
 
@@ -34,7 +34,7 @@ router.get('/fetch-newusers', authMiddleware, async (req, res) => {
 
 });
 
-router.put('/approve-user/:id', authMiddleware, async (req, res) => {
+router.put('/approve-user/:id', async (req, res) => {
     try {
         const userId = req.params.id
         console.log(userId);
@@ -73,7 +73,7 @@ router.put('/approve-user/:id', authMiddleware, async (req, res) => {
     }
 });
 
-router.put('/reject-user/:id', authMiddleware, async (req, res) => {
+router.put('/reject-user/:id', async (req, res) => {
     try {
         const userId = req.params.id
         console.log("Inside route " + userId);
@@ -112,7 +112,7 @@ router.put('/reject-user/:id', authMiddleware, async (req, res) => {
     }
 });
 
-router.put('/toggleRole/:id', authMiddleware, async (req, res) => {
+router.put('/toggleRole/:id', async (req, res) => {
     try {
         const userId = req.params.id
         console.log(userId);
@@ -161,7 +161,7 @@ router.put('/toggleRole/:id', authMiddleware, async (req, res) => {
     }
 });
 
-router.get('/fetch-users', authMiddleware, async (req, res) => {
+router.get('/fetch-users', async (req, res) => {
     try {
         // Find users role not equal to 'admin'
         const users = await User.find({
@@ -177,7 +177,7 @@ router.get('/fetch-users', authMiddleware, async (req, res) => {
     }
 });
 
-router.get("/fetch-projects", authMiddleware, async (req, res) => {
+router.get("/fetch-projects", async (req, res) => {
 
     const projects = await Project.find();
     const users = await User.find(
@@ -189,7 +189,7 @@ router.get("/fetch-projects", authMiddleware, async (req, res) => {
     res.status(201).json({ message: 'Projects fetched successfully !!', projects: projects, projects_count: projects_count, users: users });
 })
 
-router.post('/add-project', authMiddleware, async (req, res) => {
+router.post('/add-project', async (req, res) => {
 
     const data = req.body.data;
     const user = req.body.data.leader;
@@ -240,7 +240,7 @@ router.post('/add-project', authMiddleware, async (req, res) => {
     }
 });
 
-router.post('/view-resume/:id', authMiddleware, async (req, res) => {
+router.post('/view-resume/:id', async (req, res) => {
     try {
 
         const userId = req.params.id
@@ -272,7 +272,7 @@ router.post('/view-resume/:id', authMiddleware, async (req, res) => {
 
 })
 
-router.get('/del-user/:id', authMiddleware, async (req, res) => {
+router.get('/del-user/:id', async (req, res) => {
     try {
         const userId = req.params.id;
 

@@ -7,7 +7,7 @@ const User = require("../models/User");
 const nodemailer = require('nodemailer');
 
 
-router.get("/fetch-projects/:email", authMiddleware, async (req, res) => {
+router.get("/fetch-projects/:email", async (req, res) => {
 
     const email = req.params.email;
     // console.log(email);
@@ -16,7 +16,7 @@ router.get("/fetch-projects/:email", authMiddleware, async (req, res) => {
     res.status(201).json({ message: 'Projects fetched successfully !!', projects: projects, projects_count: projects_count });
 })
 
-router.post("/add-teamname", authMiddleware, async (req, res) => {
+router.post("/add-teamname", async (req, res) => {
     const { email, teamName } = req.body;
     console.log(email, teamName);
 
@@ -37,13 +37,13 @@ router.post("/add-teamname", authMiddleware, async (req, res) => {
     }
 })
 
-router.get("/fetch-teams", authMiddleware, async (req, res) => {
+router.get("/fetch-teams", async (req, res) => {
 
     const teams = await Team.find();
     return res.status(201).json({ teams: teams });
 });
 
-router.get("/fetch-project-detail/:id", authMiddleware, async (req, res) => {
+router.get("/fetch-project-detail/:id", async (req, res) => {
     const id = req.params.id;
     console.log("project id : " + id);
 
@@ -62,7 +62,7 @@ router.get("/fetch-project-detail/:id", authMiddleware, async (req, res) => {
 
 });
 
-router.get("/fetch-team-detail/:id", authMiddleware, async (req, res) => {
+router.get("/fetch-team-detail/:id", async (req, res) => {
     const id = req.params.id;
     console.log("team id : " + id);
 
@@ -81,7 +81,7 @@ router.get("/fetch-team-detail/:id", authMiddleware, async (req, res) => {
 
 });
 
-router.post('/fetch-members', authMiddleware, async (req, res) => {
+router.post('/fetch-members', async (req, res) => {
     try {
 
         // Find users with status 'pending' and role not equal to 'admin'
@@ -105,7 +105,7 @@ router.post('/fetch-members', authMiddleware, async (req, res) => {
 
 });
 
-router.post("/add-member", authMiddleware, async (req, res) => {
+router.post("/add-member", async (req, res) => {
 
     const { tid, member } = req.body;
     console.log(tid, member);

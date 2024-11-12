@@ -4,7 +4,7 @@ const authMiddleware = require("../middlewares/auth");
 const Team = require("../models/Team");
 
 
-router.post("/fetch-associated-teams", authMiddleware, async (req, res) => {
+router.post("/fetch-associated-teams", async (req, res) => {
 
     const { email } = req.body;
     console.log(email);
