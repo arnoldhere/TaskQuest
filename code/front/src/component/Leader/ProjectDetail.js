@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useParams } from "react-router-dom"
-import { ChevronDown, ChevronUp, Calendar, CheckCircle2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Calendar, CheckCircle2, UserPlus } from 'lucide-react'
 import toast, { Toaster } from "react-hot-toast";
 import Cookies from "js-cookie";
 import axios from "axios";
@@ -10,10 +10,31 @@ import FormatDate from '../../utils/FormatDate';
 export default function ProjectDetail() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [projectData, setProjectData] = useState({})
-  const { id } = useParams(); // Extract project ID from the URL
-  const navigate = useNavigate();
-  const toastShownRef = useRef(false);
+  const [teams, setTeams] = useState([])
+  const [selectedTeam, setSelectedTeam] = useState('')
+  const [progress, setProgress] = useState(0)
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const toastShownRef = useRef(false)
 
+  const handleProgressChange = async (e) => {
+    const newProgress = parseInt(e.target.value, 10)
+    setProgress(newProgress)
+
+    try {
+      const token = Cookies.get("auth-token")
+      await axios.put(`http://localhost:3333/leader/update-project-progress/${id}`, {
+        progress: newProgress
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      toast.success('Progress updated successfully')
+    } catch (error) {
+      console.error('Error updating progress:', error)
+      toast.error('Failed to update progress')
+    }
+  }
+  // fetch project and the teams
   useEffect(() => {
     const FetchProject = async () => {
       try {
@@ -47,9 +68,58 @@ export default function ProjectDetail() {
         toast.error('An error occurred while fetching project details.');
       }
     };
+    const FetchTeams = async () => {
+      try {
+        const token = Cookies.get("auth-token")
+        const res = await axios.get('http://localhost:3333/leader/fetch-teams', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
 
+        if (res.status === 201) {
+          setTeams(res.data.teams)
+        } else {
+          toast.error('Failed to fetch teams')
+        }
+      } catch (error) {
+        console.error('Error fetching teams:', error)
+        toast.error('An error occurred while fetching teams.')
+      }
+    }
+    FetchTeams();
     FetchProject();
   }, [id]);
+
+  // add the team to project
+  const handleAddTeam = async () => {
+    if (!selectedTeam) {
+      toast.error('Please select a team to add')
+      return
+    }
+
+    try {
+      const token = Cookies.get("auth-token")
+      const res = await axios.post(`http://localhost:3333/leader/add-team-to-project`, {
+        projectId: id,
+        teamId: selectedTeam
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (res.status === 201) {
+        toast.success('Team added successfully')
+        // Refresh project data
+        const updatedProject = await axios.get(`http://localhost:3333/leader/fetch-project-detail/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        setProjectData(updatedProject.data.project)
+      } else {
+        toast.error(res.data.message)
+      }
+    } catch (error) {
+      console.error('Error adding team to project:', error)
+      toast.error('An error occurred while adding the team.')
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -63,14 +133,54 @@ export default function ProjectDetail() {
           </span>
         </div>
         <div className="w-full sm:w-auto">
-          <div className="bg-gray-200 rounded-full h-4 w-full sm:w-64">
-            <div
-              className="bg-blue-500 rounded-full h-4"
-              style={{ width: `${projectData.progress}%` }}
-            />
-          </div>
-          <p className="text-sm text-gray-600 mt-1 text-center">{projectData.progress}% Complete</p>
+          <label htmlFor="progress" className="block text-sm font-medium text-gray-700 mb-1">
+            Project Progress
+          </label>
+          <input
+            type="range"
+            id="progress"
+            name="progress"
+            min="0"
+            max="100"
+            value={progress}
+            onChange={handleProgressChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <p className="text-sm text-gray-600 mt-1 text-center">{progress}% Complete</p>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold mb-2">Project Teams</h3>
+        {projectData.teams && projectData.teams.length > 0 ? (
+          <ul className="list-disc pl-5">
+            {projectData.teams.map((team) => (
+              <li key={team.id} className="text-gray-600">{team.name}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-600">No teams assigned to this project</p>
+        )}
+      </div>
+
+      <div className="flex items-center space-x-4 mb-6">
+        <select
+          value={selectedTeam}
+          onChange={(e) => setSelectedTeam(e.target.value)}
+          className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+        >
+          <option value="">Select a team</option>
+          {teams.map((team) => (
+            <option key={team.id} value={team.id}>{team.name}</option>
+          ))}
+        </select>
+        <button
+          onClick={handleAddTeam}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <UserPlus className="h-5 w-5 mr-2" />
+          Add Team
+        </button>
       </div>
 
       <button
@@ -90,11 +200,13 @@ export default function ProjectDetail() {
             transition={{ duration: 0.3 }}
             className="mt-4 space-y-4"
           >
-            {/* {projectData.tasks && projectData.tasks.length > 0 ? (
+            {projectData.tasks && projectData.tasks.length > 0 ? (
               projectData.tasks.map((task, index) => (
                 <li key={task.id} className="flex items-start space-x-4">
                   <div
-                    className={`flex-shrink-0 w-4 h-4 rounded-full mt-2 ${task.status === 'completed' ? 'bg-green-500' : task.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-300'}`}
+                    className={`flex-shrink-0 w-4 h-4 rounded-full mt-2 ${task.status === 'completed' ? 'bg-green-500' :
+                        task.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-300'
+                      }`}
                   />
                   <div className="flex-grow">
                     <div className="flex items-center justify-between">
@@ -108,7 +220,7 @@ export default function ProjectDetail() {
               ))
             ) : (
               <p className="text-gray-600 text-center">No tasks performed</p>
-            )} */}
+            )}
           </motion.ul>
         )}
       </AnimatePresence>

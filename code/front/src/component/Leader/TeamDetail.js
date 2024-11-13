@@ -1,310 +1,258 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-    Card,
-    MenuItem,
-    CardContent,
-    Typography,
-    Grid,
-    Avatar,
-    Chip,
-    Box,
-    IconButton,
-    useMediaQuery,
-    TextField,
-    useTheme,
-    Button,
-    Modal,
-} from '@mui/material'
-import { ExpandMore, ExpandLess } from '@mui/icons-material'
-import toast, { Toaster } from 'react-hot-toast'
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { User, UserPlus, Calendar, Clock, Delete, TrashIcon } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import Cookies from 'js-cookie';
-import axios from 'axios'
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelIcon from '@mui/icons-material/Cancel';
+import Button from "@mui/material/Button";
+import Avatar from "@mui/material/Avatar";
+import Table from "@mui/material/Table";
+import { TableContainer } from '@mui/material';
+import TableBody from "@mui/material/TableBody";
+import TableHead from "@mui/material/TableHead";
+import { Paper } from '@mui/material';
+// import Chcekc
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+// import TableContainer from '@mui/material';
+import Badge from "@mui/material/Badge";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import { Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
 
 export default function TeamDetail() {
-    const { id } = useParams(); // Extract project ID from the URL
-    console.log(id);
-    const tid = id;
+    const { id } = useParams();
     const navigate = useNavigate();
     const toastShownRef = useRef(false);
-    const [open, setOpen] = React.useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-    const [inputValues, setInputValues] = useState({ member: '' });
-    0
-    const handleInputChange = (event) => {
-        const { name, value } = event.target;
-        setInputValues({ ...inputValues, [name]: value });
-    };
-
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState('');
     const [teamData, setTeamData] = useState({
         name: '',
         createdAt: '',
+        deadline: '',
         leader: '',
         members: [],
-        // technologies: [],
     });
+    const [members, setMembers] = useState([]);
 
     useEffect(() => {
         const fetchTeam = async () => {
             try {
-                // setLoading(true);
                 const token = Cookies.get("auth-token");
-                console.log(id)
                 const res = await axios.get(`http://localhost:3333/leader/fetch-team-detail/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+
                 if (res.status === 201) {
                     if (!toastShownRef.current) {
                         toast.success(res.data.message);
                         toastShownRef.current = true;
                     }
-                    const team = res.data.team;
-                    setTeamData(team);
+                    setTeamData(res.data.team);
+                    console.log('Fetched team data:', res.data.team);
                 } else {
-                    if (!toastShownRef.current) {
-                        toast.error(res.data.message);
-                        toastShownRef.current = true;
-                    }
+                    toast.error(res.data.message);
                 }
             } catch (error) {
                 console.error('Error fetching team details:', error);
-                toast.error('An error occurred while fetching team detail.');
-            } finally {
-                // setLoading(false);
+                toast.error('An error occurred while fetching team details.');
+            }
+        }
+
+        const fetchMembers = async () => {
+            try {
+                const token = Cookies.get("auth-token");
+                const res = await axios.post('http://localhost:3333/leader/fetch-members', {}, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 201) {
+                    setMembers(res.data.users);
+                } else {
+                    toast.error(res.data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching members:', error);
+                toast.error('An error occurred while fetching members.');
             }
         };
 
         fetchTeam();
+        fetchMembers();
     }, [id]);
 
-    const [members, setMembers] = useState([]);
+    const removeMember = async (userId) => {
+        try {
 
-    useEffect(() => {
-        const fetchMembers = async () => {
-            try {
-                // setLoading(true);
-                const token = Cookies.get("auth-token");
-                const res = await axios.post('http://localhost:3333/leader/fetch-members', {}, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    }
-                });
-                if (res.status === 201) {
-                    setMembers(res.data.users);
-                    if (!toastShownRef.current) {
-                        toast.success(res.data.message);
-                        toastShownRef.current = true;
-                    }
-                } else {
-                    if (!toastShownRef.current) {
-                        toast.error(res.data.message);
-                        toastShownRef.current = true;
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching projects:', error);
-                toast.error('Internal server error.');
-            } finally {
-                // setLoading(false);
+            const res = await axios.get(`http://localhost:3333/leader/remove-member/${userId}`)
+            if (res.status === 201) {
+                toast.success(res.data.message || "Member removed successfully")
+                navigate("/leader/team")
             }
-        };
+            else {
+                toast.error(res.data.message || "Try again later");
+            }
 
-        fetchMembers();
-    }, []);
+        } catch (error) {
+            console.error('Error removing member:', error);
+            toast.error('Internal server error.');
+        }
 
-
-    const [expanded, setExpanded] = useState(false)
-    const theme = useTheme()
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-
-    const toggleExpand = () => {
-        setExpanded(!expanded)
     }
 
-    const cardVariants = {
-        collapsed: { height: isMobile ? '200px' : '250px' },
-        expanded: { height: 'auto' },
-    }
-
-    const contentVariants = {
-        collapsed: { opacity: 0, y: -20 },
-        expanded: { opacity: 1, y: 0 },
-    }
-
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (!inputValues) {
-            toast.error("Add a member !!");
+    const handleAddMember = async () => {
+        if (!selectedMember) {
+            toast.error("Please select a member to add.");
             return;
         }
 
-        const token = Cookies.get("auth-token");
-
-        const res = await axios.post('http://localhost:3333/leader/add-member', { tid: tid, member: inputValues.member }, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            }
-        })
-        if (res.status === 201) {
-            if (!toastShownRef.current) {
+        try {
+            const token = Cookies.get("auth-token");
+            const res = await axios.post('http://localhost:3333/leader/add-member',
+                { tid: id, member: selectedMember },
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            if (res.status === 201) {
                 toast.success(res.data.message);
-                toastShownRef.current = true;
-            }
-            navigate('/leader/team')
-            // <Link to={} />
-        } else {
-            if (!toastShownRef.current) {
+                setIsAddMemberOpen(false);
+                const updatedTeam = await axios.get(`http://localhost:3333/leader/fetch-team-detail/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setTeamData(updatedTeam.data.team);
+            } else {
                 toast.error(res.data.message);
-                toastShownRef.current = true;
             }
+        } catch (error) {
+            console.error('Error adding member:', error);
+            toast.error('An error occurred while adding the member.');
         }
+    };
 
-
-    }
+    const handleCloseDialog = () => {
+        setIsAddMemberOpen(false);
+    };
 
     return (
         <>
-            <motion.div
-                initial="collapsed"
-                animate={expanded ? 'expanded' : 'collapsed'}
-                variants={cardVariants}
-                transition={{ duration: 0.3 }}
-            >
-                <Card sx={{ overflow: 'hidden', position: 'relative', width: '100%', maxWidth: 800, margin: 'auto', marginTop: '10rem' }}>
-                    <CardContent>
-                        <Typography variant="h4" gutterBottom>
-                            {teamData.name}
-                        </Typography>
-                        <Typography variant="body1" paragraph>
-                            {teamData.createdAt}
-                        </Typography>
-                        {/* <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6}>
-                                <Typography variant="subtitle1">Status: {projectData.status}</Typography>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <Typography variant="subtitle1">
-                                    Duration: {projectData.createdAt} - {projectData.endDate}
-                                </Typography>
-                            </Grid>
-                        </Grid> */}
-                        <Box mt={2}>
-                            {/* {projectData.technologies.map((tech) => (
-              <Chip key={tech} label={tech} sx={{ mr: 1, mb: 1 }} />
-            ))} */}
-                            <Typography variant="subtitle1">
-                                Team Leader Contact: <hr />{teamData.leader}
-                            </Typography>
-                        </Box>
-                    </CardContent>
-
-                    <motion.div
-                        variants={contentVariants}
-                        transition={{ duration: 0.3 }}
-                        style={{ display: expanded ? 'block' : 'none' }}
-                    >
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                                Team :
-                            </Typography>
-                            <Button variant='contained' sx={{ margin: "5px 2px" }} onClick={handleOpen}>Add Member</Button>
-                            <Modal
-                                open={open}
-                                onClose={handleClose}
-                                aria-labelledby="modal-modal-title"
-                                aria-describedby="modal-modal-description"
-                            >
-                                <Box sx={style}>
-                                    <Typography id="modal-modal-title" variant="h6" component="h2">
-                                        Select the member
-                                    </Typography>
-                                    <form method='post' onSubmit={handleSubmit}>
-                                        <TextField
-                                            select
-                                            margin="dense"
-                                            id="leader"
-                                            label="Select a member"
-                                            fullWidth
-                                            variant="outlined"
-                                            name="member"
-                                            value={inputValues.member}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            {members.length > 0 ? (
-                                                members.map((member) => (
-                                                    <MenuItem key={member.email} value={member.email} >
-                                                        {member.email}
-                                                    </MenuItem>
-                                                ))
-                                            ) : (
-                                                <MenuItem value="not found">Not found</MenuItem>
-                                            )}
-                                            <hr />
-                                        </TextField>
-                                        <button className='my-3 mx-1 bg-blue-500 px-3 py-2 text-red-800 rounded' type='submit'>ADD</button>
-                                    </form>
-                                </Box>
-                            </Modal>
-                            <hr />
-                            <Grid container spacing={2}>
-                                {teamData.members && teamData.members.map((member, index) => (
-                                    <Grid item xs={12} sm={6} key={index + 1}>
-                                        <Box display="flex" alignItems="center">
-                                            <Box>
-                                                <Typography variant="subtitle1"> {index + 1 + ") "} {member.email}</Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </CardContent>
-                    </motion.div>
-
-                    <IconButton
-                        onClick={toggleExpand}
-                        sx={{
-                            position: 'absolute',
-                            bottom: 8,
-                            right: 8,
-                            backgroundColor: 'background.paper',
-                            borderRadius: 0,
-                            marginTop: '20px',
-                        }}
-                    >
-                        {expanded ?
-                            (<>
-                                <ExpandLess />
-                                <span className='text-xs text-red-800'>See less</span>
-                            </>
-                            )
-                            : (
-                                <>
-                                    <ExpandMore />
-                                    <span className='text-xs text-red-800'>See more</span>
-                                </>
-                            )}
-                    </IconButton>
-                </Card >
-            </motion.div >
             <Toaster />
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="container mx-auto p-4 space-y-8"
+            >
+                <header className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
+                    <h1 className="text-3xl font-bold mb-2">{teamData.name}</h1>
+                    <div className="flex flex-wrap gap-4">
+                        <div className="flex items-center">
+                            <User className="mr-2 h-5 w-5" />
+                            <span className="font-medium">Team Leader:</span>
+                            <span className="ml-2">{teamData.leader}</span>
+                        </div>
+                        <div className="flex items-center">
+                            <Calendar className="mr-2 h-5 w-5" />
+                            <span>Created: {new Date(teamData.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {teamData.deadline && (
+                            <div className="flex items-center">
+                                <Clock className="mr-2 h-5 w-5" />
+                                <span>Deadline: {new Date(teamData.deadline).toLocaleDateString()}</span>
+                            </div>
+                        )}
+                    </div>
+                </header>
+
+                <section className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold text-gray-800">Team Members</h2>
+                        <Badge variant="secondary" className="text-lg">
+                            {teamData.members.length} {teamData.members.length === 1 ? 'Member' : 'Members'}
+                        </Badge>
+                    </div>
+
+                    <Button
+                        className="mb-3 btn btn-primary bg-primary text-white"
+                        onClick={() => setIsAddMemberOpen(true)}
+                    >
+                        <UserPlus className="mr-2 h-5 w-5" />
+                        Add Team Member
+                    </Button>
+
+                    <Dialog open={isAddMemberOpen} onClose={handleCloseDialog} className='p-5'>
+                        <DialogContent>
+                            <DialogTitle>Add Team Member</DialogTitle>
+                            <hr />
+                            Select a member to add to the team. Click add when you're done.
+                            <hr />
+                            <div className="container mt-4">
+                                <FormControl fullWidth >
+                                    <InputLabel>Select a member</InputLabel>
+                                    <Select value={selectedMember} onChange={(e) => setSelectedMember(e.target.value)}>
+                                        {members.map((member) => (
+                                            <MenuItem key={member._id} value={member._id}>
+                                                {member.firstname} {member.lastname}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </div>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleAddMember} className="mb-3 btn btn-primary bg-success text-white"
+                            >Add Member</Button>
+                            <Button className="mb-3 btn btn-primary bg-danger text-white"
+                                onClick={handleCloseDialog} color="primary">
+                                Close
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                    <hr />
+                    <TableContainer component={Paper} className="max-h-96 overflow-auto">
+                        <Table stickyHeader className='table table-centered align-items-center'>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Sr.</TableCell>
+                                    <TableCell className="font-semibold">Name</TableCell>
+                                    <TableCell className="font-semibold">Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {teamData.members.length > 0 ? (
+                                    teamData.members.map((memberObj, index) => (
+                                        <TableRow key={memberObj.user._id} className="hover:bg-gray-50">
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{memberObj.user.firstname} {memberObj.user.lastname}</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="contained"
+                                                    color="warning"
+                                                    size="small"
+                                                    startIcon={<CancelIcon />}
+                                                    onClick={() => removeMember(memberObj.user._id)}
+                                                    className="hover:bg-blue-600"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center text-gray-500">
+                                            No team members at the moment.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+
+                        </Table>
+                    </TableContainer>
+                </section>
+            </motion.div>
         </>
-    )
+    );
 }

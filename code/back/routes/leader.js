@@ -20,12 +20,13 @@ router.post("/add-teamname", async (req, res) => {
     const { email, teamName } = req.body;
     console.log(email, teamName);
 
-    try {
+    const member = await User.findOne({ email: email });
 
+    try {
         const team = new Team({
             leader: email,
             name: teamName,
-            members: [{ email: email }] // Wrap the email in an object with an 'email' field
+            members: [{ user: member._id }]
         })
         await team.save();
 
@@ -63,22 +64,25 @@ router.get("/fetch-project-detail/:id", async (req, res) => {
 
 router.get("/fetch-team-detail/:id", async (req, res) => {
     const id = req.params.id;
-    console.log("team id : " + id);
-
 
     try {
+        // Find the team and populate member details
+        const team = await Team.findById(id).populate("members.user", "firstname lastname");
 
-        const team = await Team.findById(id);
-        console.log(team);
+        if (!team) {
+            return res.json({ message: "No team found." });
+        }
 
-        return res.status(201).json({ message: 'Team fetched successfully!!', team: team });
-
+        return res.status(201).json({
+            message: 'Team fetched successfully!',
+            team,
+        });
     } catch (error) {
-        console.error("Failed to fetch team detail >> " + error);
+        console.error("Failed to fetch team detail:", error);
         return res.status(500).json({ message: 'Internal server error' });
     }
-
 });
+
 
 router.post('/fetch-members', async (req, res) => {
     try {
@@ -104,17 +108,44 @@ router.post('/fetch-members', async (req, res) => {
 
 });
 
-router.post("/add-member", async (req, res) => {
 
-    const { tid, member } = req.body;
-    console.log(tid, member);
-
+router.get("/remove-member/:id", async (req, res) => {
+    const id = req.params.id;
+    console.log(id);
     try {
+        // Find the team and remove the member from the 'members' array
+        const team = await Team.findOneAndUpdate(
+            { "members.user": id }, // Find the team with the specified member
+            { $pull: { members: { user: id } } }, // Remove the member from the 'members' array
+            { new: true } // Return the updated team document
+        );
+
+        // Check if the team was found and the member was removed
+        if (!team) {
+            return res.json({ message: 'Team not found or member not found in the team.' });
+        }
+
+        return res.status(201).json({ message: 'Member removed successfully', team });
+
+    } catch (error) {
+        console.error("Failed  >> " + error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.post("/add-member", async (req, res) => {
+    try {
+
+
+        const { tid, member } = req.body;
+        console.log(tid, member);
+
+        const user = await User.findById(member);
 
         // Update the team by pushing the member as an object with an email field
         const add = await Team.findByIdAndUpdate(
             tid,
-            { $push: { members: { email: member } } }, // Ensure member is added as an object with an email key
+            { $push: { members: { user: user._id } } }, // Ensure member is added as an object with an email key
             { new: true }
         );
         const team = await Team.findById(tid);
@@ -130,7 +161,7 @@ router.post("/add-member", async (req, res) => {
         });
 
         const SendEmail = await transporter.sendMail({
-            to: member,
+            to: user.email,
             // subject: 'Happy Hacking'
             subject: 'Welcome || You are added',
             text: `Dear member you have been added to team ${team.name}. Your team leader will contact soon. \n\nRegards,\nTaskQuest Team`
