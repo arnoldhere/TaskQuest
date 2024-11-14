@@ -12,6 +12,7 @@ export default function ProjectDetail() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [projectData, setProjectData] = useState({})
   const [teamsData, setTeamsData] = useState([])
+  const [associatedTeams, setAssociatedTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const { id } = useParams()
@@ -56,10 +57,6 @@ export default function ProjectDetail() {
         });
 
         if (res.status === 201) {
-          if (!toastShownRef.current) {
-            toast.success(res.data.message);
-            toastShownRef.current = true;
-          }
           setTeamsData(res.data.teams);
           console.log("Teams : ", res.data.teams);
         } else {
@@ -71,7 +68,26 @@ export default function ProjectDetail() {
       }
     };
     FetchTeams();
+    const FetchAssociatedTeams = async () => {
+      try {
+        const token = Cookies.get("auth-token");
+        // Sending email as a query parameter in the URL
+        const res = await axios.get(`http://localhost:3333/leader/fetch-associated-teams/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
+        if (res.status === 201) {
+          setAssociatedTeams(res.data.teams);
+          console.log("Teams : ", res.data.teams);
+        } else {
+          toast.error(res.data.message);
+        }
+      } catch (error) {
+        console.error('Internal server error:', error);
+        toast.error('Internal server error.');
+      }
+    }
+    FetchAssociatedTeams()
   }, [id]);
 
   const changeProjectStatus = async () => {
@@ -127,6 +143,10 @@ export default function ProjectDetail() {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         setProjectData(updatedProject.data.project)
+        const updatedAssociatedTeams = await axios.get(`http://localhost:3333/leader/fetch-associated-teams/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setAssociatedTeams(updatedAssociatedTeams.data.teams);
       } else {
         toast.error(res.data.message)
       }
@@ -177,7 +197,7 @@ export default function ProjectDetail() {
         {/* Team Display in Tabular Form */}
         <div className="mb-4 container">
           <h3 className="text-xl font-semibold mb-2">Teams</h3>
-          {/* {projectData.teams && projectData.teams.length > 0 ? (
+          {associatedTeams.teams && associatedTeams.teams.length > 0 ? (
             <table className="min-w-full bg-white border">
               <thead>
                 <tr>
@@ -185,7 +205,7 @@ export default function ProjectDetail() {
                 </tr>
               </thead>
               <tbody>
-                {projectData.teams.map((teamData, index) => (
+                {associatedTeams.teams.map((teamData, index) => (
                   <tr key={index}>
                     <td className="px-4 py-2 border-b text-gray-600">
                       {teamData.team.name}
@@ -196,7 +216,7 @@ export default function ProjectDetail() {
             </table>
           ) : (
             <p className="text-gray-600 text-center">No teams assigned to this project</p>
-          )}  */}
+          )}
         </div>
         <hr />
       </div>

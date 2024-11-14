@@ -225,6 +225,24 @@ router.post("/change-project-status", async (req, res) => {
     return res.status(201).json({ message: "Updated successfully" });
 })
 
+
+
+router.get("/fetch-associated-teams/:id", async (req, res) => {
+    try {
+        const pid = req.params.id;
+        console.log("project id >> " + pid);
+
+        const teams = await Project.findById(pid).populate("teams.team _id name");
+        console.log("associated teams  >> " + teams)
+    
+        return res.status(201).json({ teams: teams });
+    } catch (error) {
+        console.error("Error adding team to project:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
 router.post("/add-team-to-project", async (req, res) => {
     try {
         const { projectId, teamId } = req.body;
