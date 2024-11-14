@@ -1,17 +1,16 @@
 const mongoose = require("mongoose");
+const Team = require("./Team");
 
 const projectSchema = new mongoose.Schema({
     name: String,
     description: String,
     leader: String,
     status: String,
-    // teams: [
-    //     {
-    //         tid: { type: String, required: true },
-    //         // Other fields can be added here, e.g., name, role, etc.
-    //     },
-    // ],
-    teams: Array,
+    teams: [
+        {
+            team: { type: mongoose.Schema.Types.ObjectId, ref: Team, required: true }, // Reference to User model
+        },
+    ],
     deadline: Date,
     createdAt: { type: Date, default: Date.now },
 });

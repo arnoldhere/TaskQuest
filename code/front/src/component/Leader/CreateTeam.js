@@ -14,8 +14,8 @@ import Cookies from "js-cookie"
 import toast, { Toaster } from 'react-hot-toast';
 import AddCircleSharpIcon from '@mui/icons-material/AddCircleSharp';
 import PeopleSharpIcon from '@mui/icons-material/PeopleSharp';
-import { IconButton } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
+import { Button, IconButton } from '@mui/material';
+import { Delete, Visibility } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 export default function CreateTeam() {
     const [teams, setTeams] = useState([]);
@@ -29,13 +29,14 @@ export default function CreateTeam() {
         const fetchTeams = async () => {
             try {
                 const token = Cookies.get("auth-token");
+                const email = localStorage.getItem("user");
                 setIsLoading(true); // Show loader while fetching users
-                const res = await axios.get('http://localhost:3333/leader/fetch-teams', {
+                // Include email as a query parameter
+                const res = await axios.get(`http://localhost:3333/leader/fetch-teams?email=${email}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     }
-                }); // Fetch 
-
+                });
                 if (res.status === 201) {
                     setTeams(res.data.teams || []);
                     // console.log(res.data.teams);
@@ -65,6 +66,31 @@ export default function CreateTeam() {
         console.log(_id)
         navigate(`/leader/team-detail/${_id}`);
     };
+
+    const handleDeleteTeam = async (id) => {
+        try {
+            const token = Cookies.get("auth-token")
+            console.log(id);
+            const res = await axios.get(`http://localhost:3333/leader/delete-team/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (res.status === 201) {
+                toast.success('Team deleted successfully');
+                navigate("/leader/dashboard")
+            }
+            else {
+                toast.error(res.data.message || "inetnal server Error");
+            }
+
+
+        } catch (error) {
+            console.error('Error deleting team:', error);
+            toast.error("Internal server error")
+        }
+    }
 
     const handleCreateTeam = async (e) => {
         e.preventDefault();
@@ -164,7 +190,7 @@ export default function CreateTeam() {
                                         ) : (
                                             teams.map((team) => (
                                                 <motion.tr
-                                                    key={team.id}
+                                                    key={team._id}
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
@@ -174,19 +200,28 @@ export default function CreateTeam() {
                                                     <TableCell className="font-medium">{team.name}</TableCell>
                                                     <TableCell className="text-right">{team.members.length}</TableCell>
                                                     <TableCell className="text-right">
-                                                        <motion.button
-                                                            className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                        >
-                                                            {team._id ? (
-                                                                <IconButton onClick={() => handleOpenDetailsDialog(team._id)}>
+
+                                                        {team._id ? (
+                                                            <div>
+                                                                <motion.button
+                                                                    className="text-sm text-white hover:text-red-800 btn btn-sm bg-primary transition-colors"
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    onClick={() => handleOpenDetailsDialog(team._id)}>
                                                                     <span className="text-center text-sm"><Visibility /> View</span>
-                                                                </IconButton>
-                                                            ) : (
-                                                                <span>No ID available</span>
-                                                            )}
-                                                        </motion.button>
+                                                                </motion.button>
+
+                                                                <motion.button
+                                                                    className="text-sm text-white hover:text-red-800 btn btn-sm bg-danger mx-2 transition-colors"
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    onClick={() => handleDeleteTeam(team._id)}>
+                                                                    <span className="text-center text-sm"><Delete /> DELETE</span>
+                                                                </motion.button>
+                                                            </div>
+                                                        ) : (
+                                                            <span>No ID available</span>
+                                                        )}
                                                     </TableCell>
                                                 </motion.tr>
                                             ))
