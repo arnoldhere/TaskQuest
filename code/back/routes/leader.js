@@ -56,26 +56,13 @@ router.get("/fetch-teams", async (req, res) => {
     }
 });
 
-
-router.get("/fetch-project-detail/:id", async (req, res) => {
-    try {
-        const { id } = req.params;
-        const project = await Project.findById(id).populate("teams.team", "name"); // Populate team names
-        if (!project) return res.status(404).json({ message: "Project not found" });
-        return res.status(201).json({ project });
-    } catch (error) {
-        console.error("Error fetching project details:", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-});
-
 router.get("/fetch-project-detail/:id", async (req, res) => {
     const id = req.params.id;
     console.log("project id : " + id);
 
     try {
 
-        const project = await Project.findById(id);
+        const project = await Project.findById(id).populate("teams.team name");
         console.log(project);
 
         return res.status(201).json({ message: 'Project fetched successfully!!', project: project });
@@ -85,6 +72,30 @@ router.get("/fetch-project-detail/:id", async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 
+});
+
+router.get("/fetch-teams-of-leader", async (req, res) => {
+    const { email } = req.query;  // Use req.query to get the email from the query string
+    console.log("leader email : " + email);
+    try {
+        // Find teams where the leader matches the provided email
+        const teams = await Team.find({ leader: email });
+
+        // Check if teams are found
+        if (!teams || teams.length === 0) {
+            return res.status(404).json({ message: 'No teams found for this leader' });
+        }
+
+        console.log("teams : ", teams);
+        // Return the teams associated with the leader
+        return res.status(201).json({
+            teams: teams
+        });
+
+    } catch (error) {
+        console.error("Error fetching teams associated with the leader:", error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 router.get("/fetch-team-detail/:id", async (req, res) => {
@@ -216,25 +227,36 @@ router.post("/change-project-status", async (req, res) => {
 
 router.post("/add-team-to-project", async (req, res) => {
     try {
-
         const { projectId, teamId } = req.body;
-        console.log(projectId, teamId);
-        const project = await Project.findById(projectId);
-        if (!project)
-            return res.json({ message: "No project found .." })
+        console.log("Project ID:", projectId, "Team ID:", teamId);
 
-        const add = await Project.findByIdAndUpdate(
+        // Find the project by ID
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.json({ message: "No project found." });
+        }
+
+        // Check if the team is already added to the project
+        const isTeamAdded = project.teams.some(teamEntry => teamEntry.team.toString() === teamId);
+
+        if (isTeamAdded) {
+            return res.json({ message: "Team is already added to this project." });
+        }
+
+        // Add the team to the project
+        await Project.findByIdAndUpdate(
             projectId,
             { $push: { teams: { team: teamId } } },
             { new: true }
         );
 
-        return res.status(201).json({ message: "Team added successfully" });
+        return res.status(201).json({ message: "Team added successfully." });
     } catch (error) {
-        console.error("error in adding team " + error)
-        return res.status(500).json({ message: "Internal Server error" });
+        console.error("Error adding team to project:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 router.get("/delete-team/:id", async (req, res) => {
     try {
@@ -249,6 +271,30 @@ router.get("/delete-team/:id", async (req, res) => {
         }
     } catch (error) {
         console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+router.get("/fetch-teams-to-project/:id", async (req, res) => {
+    try {
+        const projectId = req.params.id;
+        const { leader } = req.body; // Leader to filter teams by
+
+        // Find the project by ID and populate the teams array
+        const project = await Project.findById(projectId).populate("teams.team", "name _id")
+
+        if (!project) {
+            return res.json({ message: "Project not found" });
+        }
+
+        // Filter out any teams that didn’t match the leader filter
+        // cconst filteredTeams = 
+        // console.log(project);
+
+
+        return res.status(201).json({ message: "Loading..." }, { project: project });
+    } catch (error) {
+        console.log(error);
         return res.status(500).json({ message: "Internal server error" });
     }
 });

@@ -79,6 +79,7 @@ export default function LeaderProjects() {
                 });
                 if (res.status === 201) {
                     setProjects(res.data.projects);
+                    console.log(res.data.projects);
                     setScorecardData([
                         { title: 'Assigned Projects', value: res.data.projects_count },
                     ]);
