@@ -60,7 +60,7 @@ export default function LeaderNavbar() {
     const navItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, href: '/leader/dashboard' },
         { text: 'Team', icon: <GroupIcon />, href: '/leader/team' },
-        { text: 'Tasks', icon: <AssignmentIcon />, href: '/tasks' },
+        // { text: 'Tasks', icon: <AssignmentIcon />, href: '/tasks' },
         { text: 'Messages', icon: <MessageIcon />, href: '/messages' },
     ];
 

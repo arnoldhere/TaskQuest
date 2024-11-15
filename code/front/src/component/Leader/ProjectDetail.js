@@ -11,7 +11,8 @@ import FormatDate from '../../utils/FormatDate';
 export default function ProjectDetail() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [projectData, setProjectData] = useState({})
-  const [teams, setTeams] = useState([])
+  const [teamsData, setTeamsData] = useState([])
+  const [associatedTeams, setAssociatedTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const { id } = useParams()
@@ -24,7 +25,6 @@ export default function ProjectDetail() {
     { title: "Delayed", color: "Warning" },
     { title: "Skipped", color: "primary" },
   ]
-
   // fetch project and the teams
   useEffect(() => {
     const FetchProject = async () => {
@@ -35,22 +35,7 @@ export default function ProjectDetail() {
         });
 
         if (res.status === 201) {
-          if (!toastShownRef.current) {
-            toast.success(res.data.message);
-            toastShownRef.current = true;
-          }
-
-          const project = res.data.project;
-
-          // Calculate project progress based on tasks
-          if (project.tasks && project.tasks.length > 0) {
-            const completedTasks = project.tasks.filter(task => task.status === "completed").length;
-            const progress = (completedTasks / project.tasks.length) * 100;
-            setProjectData({ ...project, progress });
-          } else {
-            setProjectData({ ...project, progress: 0 });
-          }
-
+          setProjectData(res.data.project);
         } else {
           toast.error(res.data.message);
         }
@@ -59,26 +44,50 @@ export default function ProjectDetail() {
         toast.error('An error occurred while fetching project details.');
       }
     };
+    FetchProject();
     const FetchTeams = async () => {
       try {
-        const token = Cookies.get("auth-token")
-        const res = await axios.get('http://localhost:3333/leader/fetch-teams-to-projects', {
+        const token = Cookies.get("auth-token");
+        const email = Cookies.get("email");
+        console.log(email);
+
+        // Sending email as a query parameter in the URL
+        const res = await axios.get(`http://localhost:3333/leader/fetch-teams-of-leader?email=${email}`, {
           headers: { 'Authorization': `Bearer ${token}` }
-        }, { id: id })
+        });
 
         if (res.status === 201) {
-          setTeams(res.data.teams)
-          console.log(teams);
+          setTeamsData(res.data.teams);
+          console.log("Teams : ", res.data.teams);
         } else {
-          toast.error('Failed to fetch teams')
+          toast.error(res.data.message);
         }
       } catch (error) {
-        console.error('Error fetching teams:', error)
-        toast.error('An error occurred while fetching teams.')
+        console.error('Internal server error:', error);
+        toast.error('An error occurred while fetching project details.');
+      }
+    };
+    FetchTeams();
+    const FetchAssociatedTeams = async () => {
+      try {
+        const token = Cookies.get("auth-token");
+        // Sending email as a query parameter in the URL
+        const res = await axios.get(`http://localhost:3333/leader/fetch-associated-teams/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 201) {
+          setAssociatedTeams(res.data.teams);
+          console.log("Teams : ", res.data.teams);
+        } else {
+          toast.error(res.data.message);
+        }
+      } catch (error) {
+        console.error('Internal server error:', error);
+        toast.error('Internal server error.');
       }
     }
-    FetchTeams();
-    FetchProject();
+    FetchAssociatedTeams()
   }, [id]);
 
   const changeProjectStatus = async () => {
@@ -134,6 +143,10 @@ export default function ProjectDetail() {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         setProjectData(updatedProject.data.project)
+        const updatedAssociatedTeams = await axios.get(`http://localhost:3333/leader/fetch-associated-teams/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setAssociatedTeams(updatedAssociatedTeams.data.teams);
       } else {
         toast.error(res.data.message)
       }
@@ -181,11 +194,10 @@ export default function ProjectDetail() {
       </div>
       <hr />
       <div className="mb-3">
-        <h3 className="text-xl font-semibold mb-2">Teams <Badge color="primary" className='mx-2' badgeContent={projectData.teams.length}></Badge></h3>
         {/* Team Display in Tabular Form */}
         <div className="mb-4 container">
           <h3 className="text-xl font-semibold mb-2">Teams</h3>
-          {projectData.teams && projectData.teams.length > 0 ? (
+          {associatedTeams.teams && associatedTeams.teams.length > 0 ? (
             <table className="min-w-full bg-white border">
               <thead>
                 <tr>
@@ -193,7 +205,7 @@ export default function ProjectDetail() {
                 </tr>
               </thead>
               <tbody>
-                {projectData.teams.map((teamData, index) => (
+                {associatedTeams.teams.map((teamData, index) => (
                   <tr key={index}>
                     <td className="px-4 py-2 border-b text-gray-600">
                       {teamData.team.name}
@@ -215,9 +227,9 @@ export default function ProjectDetail() {
           onChange={(e) => setSelectedTeam(e.target.value)}
           className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border-2"
         >
-          <option value="">Select a team</option>
-          {teams.map((team) => (
-            <option key={team.id} value={team._id}>{team.name}</option>
+          <option value="" disabled selected>Select a team</option>
+          {teamsData.map((t) => (
+            <option key={t._id} value={t._id}>{t.name}</option>
           ))}
         </select>
         <button
@@ -237,7 +249,7 @@ export default function ProjectDetail() {
         {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
       </button>
 
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {isExpanded && (
           <motion.ul
             initial={{ opacity: 0, height: 0 }}
@@ -269,7 +281,7 @@ export default function ProjectDetail() {
             )}
           </motion.ul>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
       <Toaster />
     </div>
   );
